@@ -1,0 +1,65 @@
+body {
+  margin: 0;
+  padding: 0;
+  background: #f1f5f9;
+  font-family: "Poppins", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2563eb;
+  border-radius: 20px;
+}
+
+::-webkit-scrollbar-track {
+  background: #e2e8f0;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th {
+  background: #2563eb;
+  color: white;
+  padding: 12px;
+}
+
+td {
+  padding: 10px;
+}
+
+tr:nth-child(even) {
+  background: #f8fafc;
+}
+
+button {
+  cursor: pointer;
+}
+
+input,
+select {
+  outline: none;
+}
+
+input:focus,
+select:focus {
+  border: 2px solid #2563eb;
+}
+
+.card-animation {
+  transition: all 0.3s ease;
+}
+
+.card-animation:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
