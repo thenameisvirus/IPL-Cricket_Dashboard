@@ -1,16 +1,171 @@
-# React + Vite
+# 🏏 IPL Cricket Analytics Dashboard
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A Full Stack IPL Cricket Analytics Dashboard built using **React.js**, **FastAPI**, **Python**, **Pandas**, and **Machine Learning**. This dashboard provides interactive IPL statistics, player analytics, team comparisons, and match predictions through a modern responsive interface.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 🚀 Live Demo
 
-## React Compiler
+### 🌐 Frontend
+https://ipl-cricket-dashboard.vercel.app
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### ⚙️ Backend API
+https://ipl-cricket-dashboard.onrender.com
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+# 📸 Screenshots
+
+> Add your screenshots inside a folder named **screenshots**.
+
+| Login | Dashboard |
+|--------|-----------|
+| Login Screenshot | Dashboard Screenshot |
+
+| Prediction | Analytics |
+|------------|-----------|
+| Prediction Screenshot | Analytics Screenshot |
+
+---
+
+# ✨ Features
+
+- 🔐 User Login
+- 📊 Interactive Dashboard
+- 🏏 Top Batsmen Analysis
+- 🎯 Top Bowlers Analysis
+- 📈 Team Wins Statistics
+- 🥧 Interactive Pie Charts
+- 🔍 Player Search
+- ⚔ Team Comparison
+- 🤖 Match Winner Prediction
+- 📑 Analytics Dashboard
+- 📥 Export Excel
+- 🌙 Dark Mode
+- 📱 Responsive Design
+- ☁ Cloud Deployment
+
+---
+
+# 🛠 Tech Stack
+
+## Frontend
+
+- React.js
+- Tailwind CSS
+- Axios
+- Recharts
+- React Router
+- Lucide Icons
+
+## Backend
+
+- FastAPI
+- Python
+- Pandas
+- NumPy
+- Scikit-learn
+- Uvicorn
+
+## Deployment
+
+- Vercel
+- Render
+- GitHub
+
+---
+
+# 📂 Project Structure
+
+```
+IPL-Cricket_Dashboard/
+
+├── backend/
+│   ├── analysis/
+│   ├── ml/
+│   ├── dataset/
+│   ├── main.py
+│   └── requirements.txt
+│
+├── frontend/
+│   ├── src/
+│   ├── public/
+│   ├── package.json
+│   └── vite.config.js
+│
+└── README.md
+```
+
+---
+
+# ⚙ Installation
+
+## Clone Repository
+
+```bash
+git clone https://github.com/thenameisvirus/IPL-Cricket_Dashboard.git
+```
+
+---
+
+## Backend
+
+```bash
+cd backend
+
+pip install -r requirements.txt
+
+uvicorn main:app --reload
+```
+
+---
+
+## Frontend
+
+```bash
+cd frontend
+
+npm install
+
+npm run dev
+```
+
+---
+
+# 📊 Machine Learning
+
+This project includes a Machine Learning model that predicts IPL match winners using historical IPL data.
+
+---
+
+# 🎯 Future Improvements
+
+- Live IPL Score API
+- Player Images
+- Team Logos
+- Animated Dashboard
+- AI Insights
+- Match Simulation
+- Player Performance Prediction
+
+---
+
+# 👨‍💻 Developer
+
+**GitHub**
+
+https://github.com/thenameisvirus
+
+---
+
+# ⭐ Support
+
+If you like this project,
+
+Please ⭐ Star this repository.
+
+---
+
+# 📜 License
+
+This project is created for educational and portfolio purposes.
