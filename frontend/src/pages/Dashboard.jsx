@@ -29,6 +29,7 @@ import DashboardCard from "../components/DashboardCard";
 import TeamWinsChart from "../components/TeamWinsChart";
 import CustomPieChart from "../components/PieChart";
 import PlayerSearch from "../components/PlayerSearch";
+
 import BASE_URL from "../services/api";
 
 function Dashboard() {
@@ -84,15 +85,23 @@ function Dashboard() {
         safeGet(`${BASE_URL}/top_bowlers`, {}),
       ]);
 
+      console.log("MATCHES:", matchesData);
+      console.log("TEAMS:", teamsData);
+      console.log("PLAYERS:", playersData);
+      console.log("ORANGE:", orangeData);
+      console.log("PURPLE:", purpleData);
+      console.log("BATSMEN:", batsmenData);
+      console.log("BOWLERS:", bowlersData);
+
       setMatches(extractNumber(matchesData));
       setTeams(extractNumber(teamsData));
       setPlayers(extractNumber(playersData));
 
-      const batsmen = normalizeBatsmen(batsmenData);
-      const bowlers = normalizeBowlers(bowlersData);
-
       setOrangeCap(normalizeCap(orangeData));
       setPurpleCap(normalizeCap(purpleData));
+
+      const batsmen = normalizeBatsmen(batsmenData);
+      const bowlers = normalizeBowlers(bowlersData);
 
       setTopBatsmen(batsmen);
       setTopBowlers(bowlers);
@@ -123,27 +132,38 @@ function Dashboard() {
   }, [topBowlers]);
 
   return (
-    <div className="min-h-screen w-full overflow-x-hidden bg-[#050914] text-white">
-      {/* MOBILE / DESKTOP SIDEBAR */}
+    <div className="min-h-screen bg-[#050914] text-white">
+      {/* =====================================================
+          SIDEBAR
+      ===================================================== */}
+
       <Sidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
       />
 
-      {/* MAIN CONTENT
-          Sidebar width = 250px on desktop
-      */}
-      <div className="min-h-screen min-w-0 lg:pl-[250px]">
-        {/* NAVBAR */}
-        <div className="sticky top-0 z-50">
-          <Navbar
-            onMenuClick={() => setSidebarOpen(true)}
-          />
-        </div>
+      {/* =====================================================
+          MAIN AREA
+      ===================================================== */}
 
-        {/* PAGE CONTENT */}
-        <main className="mx-auto w-full max-w-[1800px] min-w-0 overflow-x-hidden px-4 py-5 sm:px-6 sm:py-7 lg:px-8 lg:py-8 xl:px-10">
-          {/* HEADER */}
+      <div className="min-h-screen lg:ml-[250px]">
+        {/* =====================================================
+            NAVBAR
+        ===================================================== */}
+
+        <Navbar
+          onMenuClick={() => setSidebarOpen(true)}
+        />
+
+        {/* =====================================================
+            CONTENT
+        ===================================================== */}
+
+        <main className="w-full min-w-0 overflow-x-hidden px-4 py-6 sm:px-6 lg:px-8">
+          {/* =================================================
+              HEADER
+          ================================================= */}
+
           <div className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div className="min-w-0">
               <div className="mb-2 flex items-center gap-2">
@@ -158,9 +178,9 @@ function Dashboard() {
                 Cricket Dashboard
               </h1>
 
-              <p className="mt-2 max-w-xl text-xs leading-5 text-slate-500 sm:text-sm">
-                Explore IPL matches, teams, players, batting and
-                bowling performance from your dataset.
+              <p className="mt-2 max-w-xl text-xs leading-5 text-slate-500">
+                Explore IPL matches, teams, players, batting and bowling
+                performance from your dataset.
               </p>
             </div>
 
@@ -174,11 +194,15 @@ function Dashboard() {
                 size={14}
                 className={loading ? "animate-spin" : ""}
               />
+
               Refresh
             </button>
           </div>
 
-          {/* ERROR */}
+          {/* =================================================
+              ERROR
+          ================================================= */}
+
           {error && (
             <div className="mb-6 flex items-start gap-3 rounded-2xl border border-red-400/10 bg-red-500/[0.05] p-4">
               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-red-500/10 text-red-400">
@@ -190,14 +214,17 @@ function Dashboard() {
                   Dashboard Data Notice
                 </p>
 
-                <p className="mt-1 break-words text-[10px] text-red-400/70">
+                <p className="mt-1 text-[10px] text-red-400/70">
                   {error}
                 </p>
               </div>
             </div>
           )}
 
-          {/* STAT CARDS */}
+          {/* =================================================
+              STAT CARDS
+          ================================================= */}
+
           <div className="grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-5">
             <DashboardCard
               title="Total Matches"
@@ -243,9 +270,13 @@ function Dashboard() {
             />
           </div>
 
-          {/* CAP CARDS */}
+          {/* =================================================
+              CAP CARDS
+          ================================================= */}
+
           <div className="mt-6 grid min-w-0 gap-4 lg:grid-cols-2">
             {/* ORANGE CAP */}
+
             <div className="min-w-0 overflow-hidden rounded-[22px] border border-orange-400/10 bg-gradient-to-br from-orange-500/[0.07] to-[#0a101d] p-5">
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
@@ -278,6 +309,7 @@ function Dashboard() {
             </div>
 
             {/* PURPLE CAP */}
+
             <div className="min-w-0 overflow-hidden rounded-[22px] border border-purple-400/10 bg-gradient-to-br from-purple-500/[0.07] to-[#0a101d] p-5">
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
@@ -310,9 +342,13 @@ function Dashboard() {
             </div>
           </div>
 
-          {/* BATSMEN + BOWLERS */}
+          {/* =================================================
+              BATTING + BOWLING
+          ================================================= */}
+
           <div className="mt-6 grid min-w-0 gap-5 xl:grid-cols-2">
             {/* TOP BATSMEN */}
+
             <div className="min-w-0 overflow-hidden rounded-[22px] border border-white/[0.06] bg-[#080e1a] p-5">
               <div className="mb-5 flex items-center justify-between gap-3">
                 <div className="min-w-0">
@@ -332,15 +368,18 @@ function Dashboard() {
               </div>
 
               {battingChartData.length > 0 ? (
-                <div className="h-[360px] w-full min-w-0 sm:h-[390px]">
-                  <ResponsiveContainer width="100%" height="100%">
+                <div className="h-[390px] w-full min-w-0">
+                  <ResponsiveContainer
+                    width="100%"
+                    height="100%"
+                  >
                     <BarChart
                       data={battingChartData}
                       margin={{
                         top: 10,
-                        right: 10,
+                        right: 15,
                         left: 0,
-                        bottom: 70,
+                        bottom: 75,
                       }}
                     >
                       <CartesianGrid
@@ -354,7 +393,7 @@ function Dashboard() {
                         interval={0}
                         angle={-35}
                         textAnchor="end"
-                        height={80}
+                        height={85}
                         tick={{
                           fill: "#64748b",
                           fontSize: 10,
@@ -375,6 +414,9 @@ function Dashboard() {
                       />
 
                       <Tooltip
+                        cursor={{
+                          fill: "rgba(255,255,255,0.03)",
+                        }}
                         formatter={(value) => [
                           `${Number(value).toLocaleString()} Runs`,
                           "Runs",
@@ -382,9 +424,6 @@ function Dashboard() {
                         labelFormatter={(label) =>
                           String(label)
                         }
-                        cursor={{
-                          fill: "rgba(255,255,255,0.03)",
-                        }}
                         contentStyle={{
                           background: "#0b1220",
                           border:
@@ -410,6 +449,7 @@ function Dashboard() {
             </div>
 
             {/* TOP BOWLERS */}
+
             <div className="min-w-0 overflow-hidden rounded-[22px] border border-white/[0.06] bg-[#080e1a] p-5">
               <div className="mb-5 flex items-center justify-between gap-3">
                 <div className="min-w-0">
@@ -429,15 +469,18 @@ function Dashboard() {
               </div>
 
               {bowlingChartData.length > 0 ? (
-                <div className="h-[360px] w-full min-w-0 sm:h-[390px]">
-                  <ResponsiveContainer width="100%" height="100%">
+                <div className="h-[390px] w-full min-w-0">
+                  <ResponsiveContainer
+                    width="100%"
+                    height="100%"
+                  >
                     <BarChart
                       data={bowlingChartData}
                       margin={{
                         top: 10,
-                        right: 10,
+                        right: 15,
                         left: 0,
-                        bottom: 70,
+                        bottom: 75,
                       }}
                     >
                       <CartesianGrid
@@ -451,7 +494,7 @@ function Dashboard() {
                         interval={0}
                         angle={-35}
                         textAnchor="end"
-                        height={80}
+                        height={85}
                         tick={{
                           fill: "#64748b",
                           fontSize: 10,
@@ -472,6 +515,9 @@ function Dashboard() {
                       />
 
                       <Tooltip
+                        cursor={{
+                          fill: "rgba(255,255,255,0.03)",
+                        }}
                         formatter={(value) => [
                           `${Number(value).toLocaleString()} Wickets`,
                           "Wickets",
@@ -479,9 +525,6 @@ function Dashboard() {
                         labelFormatter={(label) =>
                           String(label)
                         }
-                        cursor={{
-                          fill: "rgba(255,255,255,0.03)",
-                        }}
                         contentStyle={{
                           background: "#0b1220",
                           border:
@@ -507,7 +550,10 @@ function Dashboard() {
             </div>
           </div>
 
-          {/* TOP BATSMEN TABLE */}
+          {/* =================================================
+              TOP BATSMEN TABLE
+          ================================================= */}
+
           <div className="mt-6 min-w-0 overflow-hidden rounded-[22px] border border-white/[0.06] bg-[#080e1a] p-5">
             <div className="mb-5 flex items-center justify-between gap-3">
               <div>
@@ -527,7 +573,7 @@ function Dashboard() {
             </div>
 
             {topBatsmen.length > 0 ? (
-              <div className="w-full overflow-x-auto">
+              <div className="overflow-x-auto">
                 <table className="w-full min-w-[520px] border-collapse">
                   <thead>
                     <tr className="border-b border-white/[0.06]">
@@ -585,7 +631,10 @@ function Dashboard() {
             )}
           </div>
 
-          {/* TEAM CHARTS */}
+          {/* =================================================
+              TEAM CHARTS
+          ================================================= */}
+
           <div className="mt-6 grid min-w-0 gap-5 xl:grid-cols-2">
             <div className="min-w-0 overflow-hidden rounded-[22px] border border-white/[0.06] bg-[#080e1a] p-5">
               <div className="mb-5 flex items-center gap-3">
@@ -622,7 +671,10 @@ function Dashboard() {
             </div>
           </div>
 
-          {/* PLAYER SEARCH */}
+          {/* =================================================
+              PLAYER SEARCH
+          ================================================= */}
+
           <div className="mt-6 min-w-0">
             <PlayerSearch />
           </div>
@@ -938,7 +990,7 @@ function getInitials(name) {
 
 function EmptyState({ text }) {
   return (
-    <div className="flex min-h-[260px] w-full flex-col items-center justify-center rounded-2xl border border-white/[0.04] bg-white/[0.015] px-4 text-center">
+    <div className="flex min-h-[260px] flex-col items-center justify-center rounded-2xl border border-white/[0.04] bg-white/[0.015] text-center">
       <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/[0.03]">
         <AlertCircle
           size={20}
@@ -955,6 +1007,11 @@ function EmptyState({ text }) {
       </p>
     </div>
   );
+}
+
+/* Compatibility alias */
+function EmptyData({ text }) {
+  return <EmptyState text={text} />;
 }
 
 export default Dashboard;
