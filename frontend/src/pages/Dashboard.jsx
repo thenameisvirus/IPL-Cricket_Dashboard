@@ -153,7 +153,7 @@ function Dashboard() {
 
 
   return (
-    <div className="min-h-screen bg-[#050914] text-white">
+    <div className="min-h-screen w-full overflow-x-hidden bg-[#050914] text-white">
 
       {/* =====================================================
           SIDEBAR
@@ -169,7 +169,7 @@ function Dashboard() {
           MAIN AREA
       ===================================================== */}
 
-      <div className="lg:ml-[250px] min-h-screen">
+      <div className="min-h-screen w-full lg:pl-[250px]">
 
         {/* NAVBAR */}
 
@@ -182,7 +182,7 @@ function Dashboard() {
             CONTENT
         =================================================== */}
 
-        <main className="w-full px-4 py-6 sm:px-6 lg:px-8">
+        <main className="mx-auto w-full min-w-0 max-w-[1750px] px-4 py-6 sm:px-6 lg:px-8 xl:px-10">
 
           {/* =================================================
               HEADER
@@ -323,7 +323,7 @@ function Dashboard() {
               CAP CARDS
           ================================================= */}
 
-          <div className="mt-6 grid gap-4 lg:grid-cols-2">
+          <div className="mt-6 grid min-w-0 gap-4 lg:grid-cols-2">
 
             {/* ORANGE CAP */}
 
@@ -417,7 +417,7 @@ function Dashboard() {
               BATTING + BOWLING
           ================================================= */}
 
-          <div className="mt-6 grid gap-5 xl:grid-cols-2">
+          <div className="mt-6 grid min-w-0 gap-5 xl:grid-cols-2">
 
 
             {/* =================================================
@@ -531,7 +531,7 @@ function Dashboard() {
 
               ) : (
 
-                <EmptyData text="No batting data available" />
+                <EmptyState text="No batting data available" />
 
               )}
 
@@ -662,7 +662,7 @@ function Dashboard() {
               TOP BATSMEN TABLE
           ================================================= */}
 
-          <div className="mt-6 rounded-[22px] border border-white/[0.06] bg-[#080e1a] p-5">
+          <div className="mt-6 min-w-0 rounded-[22px] border border-white/[0.06] bg-[#080e1a] p-5">
 
             <div className="mb-5 flex items-center justify-between">
 
@@ -1238,11 +1238,6 @@ function getInitials(name) {
 ========================================================= */
 
 function EmptyState({ text }) {
-  return <EmptyData text={text} />;
-}
-
-
-function EmptyData({ text }) {
 
   return (
 
@@ -1272,5 +1267,7 @@ function EmptyData({ text }) {
   );
 }
 
+
+const EmptyData = EmptyState;
 
 export default Dashboard;
