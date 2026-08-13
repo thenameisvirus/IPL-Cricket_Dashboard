@@ -1,6 +1,3 @@
-import { useEffect, useState } from "react";
-import axios from "axios";
-
 import {
   PieChart,
   Pie,
@@ -10,70 +7,110 @@ import {
   Legend,
 } from "recharts";
 
-import BASE_URL from "../services/api";
-
 const COLORS = [
-  "#2563eb",
-  "#16a34a",
-  "#dc2626",
-  "#f59e0b",
-  "#7c3aed",
-  "#0ea5e9",
-  "#ec4899",
-  "#14b8a6",
   "#f97316",
+  "#a855f7",
+  "#3b82f6",
+  "#06b6d4",
+  "#10b981",
+  "#ec4899",
+  "#eab308",
+  "#ef4444",
   "#8b5cf6",
+  "#14b8a6",
 ];
 
-function CustomPieChart() {
-  const [data, setData] = useState([]);
+function CustomPieChart({ data = [] }) {
+  const formattedData = Array.isArray(data)
+    ? data
+        .map((team) => ({
+          name:
+            team?.team ||
+            team?.Team ||
+            team?.team_name ||
+            team?.TeamName ||
+            team?.name ||
+            "Unknown",
 
-  useEffect(() => {
-    loadData();
-  }, []);
+          value:
+            Number(
+              team?.wins ??
+                team?.Wins ??
+                team?.team_wins ??
+                team?.TeamWins ??
+                team?.value ??
+                0
+            ) || 0,
+        }))
+        .filter((item) => item.value > 0)
+    : [];
 
-  async function loadData() {
-    try {
-      const res = await axios.get(`${BASE_URL}/venue_statistics`);
+  if (!formattedData.length) {
+    return (
+      <div className="flex min-h-[350px] items-center justify-center">
+        <div className="text-center">
+          <div className="mb-4 text-5xl">📊</div>
 
-      const chartData = Object.entries(res.data).map(([name, value]) => ({
-        name,
-        value,
-      }));
+          <h3 className="text-xl font-black text-slate-300">
+            No team performance data
+          </h3>
 
-      setData(chartData);
-    } catch (error) {
-      console.log(error);
-    }
+          <p className="mt-2 text-sm text-slate-600">
+            Backend did not return team performance statistics.
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="bg-white rounded-xl shadow p-5 mt-8">
-      <h2 className="text-2xl font-bold mb-5 text-center">
-        🏙️ IPL Home Cities Distribution
-      </h2>
-
-      <ResponsiveContainer width="100%" height={450}>
+    <div className="h-[350px] w-full">
+      <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie
-            data={data}
+            data={formattedData}
             cx="50%"
-            cy="50%"
-            outerRadius={150}
+            cy="45%"
+            outerRadius={105}
+            innerRadius={55}
+            paddingAngle={2}
             dataKey="value"
             nameKey="name"
-            label={({ name }) => name}
+            stroke="rgba(5,8,22,0.9)"
+            strokeWidth={2}
           >
-            {data.map((entry, index) => (
+            {formattedData.map((entry, index) => (
               <Cell
-                key={index}
+                key={`${entry.name}-${index}`}
                 fill={COLORS[index % COLORS.length]}
               />
             ))}
           </Pie>
 
-          <Tooltip />
-          <Legend verticalAlign="bottom" height={40} />
+          <Tooltip
+            contentStyle={{
+              background: "#0b1220",
+              border: "1px solid rgba(255,255,255,0.08)",
+              borderRadius: "12px",
+              color: "#fff",
+            }}
+            labelStyle={{
+              color: "#cbd5e1",
+              fontWeight: 800,
+            }}
+            formatter={(value) => [`${value} Wins`, "Wins"]}
+          />
+
+          <Legend
+            verticalAlign="bottom"
+            height={55}
+            iconType="circle"
+            wrapperStyle={{
+              fontSize: "10px",
+              fontWeight: 700,
+              color: "#64748b",
+            }}
+          />
         </PieChart>
       </ResponsiveContainer>
     </div>

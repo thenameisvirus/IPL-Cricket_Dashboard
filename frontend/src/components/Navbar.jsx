@@ -1,4 +1,5 @@
 import { useState } from "react";
+
 import {
   Search,
   Bell,
@@ -14,7 +15,7 @@ import {
 
 import { useTheme } from "../context/ThemeContext";
 
-function Navbar() {
+function Navbar({ onMenuClick }) {
   const { darkMode, toggleTheme } = useTheme();
 
   const [search, setSearch] = useState("");
@@ -27,105 +28,217 @@ function Navbar() {
     year: "numeric",
   });
 
+  function handleMenuClick() {
+    setMenuOpen((prev) => !prev);
+
+    if (typeof onMenuClick === "function") {
+      onMenuClick();
+    }
+  }
+
   return (
     <header
-      className={`
-      sticky
-      top-0
-      z-50
-      backdrop-blur-xl
-      border-b
-      transition-all
-      duration-500
-
-      ${
+      className={`sticky top-0 z-50 w-full border-b backdrop-blur-2xl transition-all duration-300 ${
         darkMode
-          ? "bg-slate-900/80 border-slate-700"
-          : "bg-white/80 border-gray-200"
-      }
-      `}
+          ? "border-slate-700/70 bg-slate-900/90"
+          : "border-gray-200 bg-white/90"
+      }`}
     >
-      <div className="px-8 py-5">
+      <div className="w-full px-3 py-3 sm:px-4 sm:py-4 md:px-6 lg:px-8">
+        <div className="mx-auto w-full max-w-[1800px]">
 
-        {/* Top Navbar */}
+          {/* =====================================================
+              MAIN NAV ROW
+          ====================================================== */}
 
-        <div className="flex items-center justify-between">
+          <div className="flex min-w-0 items-center justify-between gap-2 sm:gap-3">
 
-          {/* ========================= */}
-          {/* LEFT SECTION */}
-          {/* ========================= */}
+            {/* LEFT */}
 
-          <div className="flex items-center gap-4">
+            <div className="flex min-w-0 items-center gap-2 sm:gap-3 md:gap-4">
 
-            {/* Mobile Menu */}
+              {/* MOBILE MENU */}
 
-            <button
-              onClick={() => setMenuOpen(!menuOpen)}
-              className="
-              lg:hidden
-              p-3
-              rounded-xl
-              transition
-              hover:scale-105
-              "
-            >
-              {menuOpen ? (
-                <X size={24} />
-              ) : (
-                <Menu size={24} />
-              )}
-            </button>
+              <button
+                type="button"
+                onClick={handleMenuClick}
+                aria-label="Open navigation menu"
+                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition sm:h-11 sm:w-11 ${
+                  darkMode
+                    ? "bg-slate-800/80 text-slate-200 hover:bg-slate-700"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                } lg:hidden`}
+              >
+                {menuOpen ? (
+                  <X size={20} />
+                ) : (
+                  <Menu size={20} />
+                )}
+              </button>
 
-            {/* Logo */}
+              {/* LOGO */}
 
-            <div
-              className="
-              w-16
-              h-16
-              rounded-2xl
-              bg-gradient-to-br
-              from-orange-500
-              via-red-500
-              to-pink-600
-              flex
-              items-center
-              justify-center
-              shadow-xl
-              "
-            >
-              <Trophy
-                size={30}
-                className="text-white"
-              />
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500 via-red-500 to-pink-600 shadow-lg sm:h-12 sm:w-12 sm:rounded-2xl">
+                <Trophy
+                  size={21}
+                  className="text-white sm:size-[24px]"
+                />
+              </div>
+
+              {/* TITLE */}
+
+              <div className="min-w-0">
+
+                <h1
+                  className={`truncate text-sm font-black tracking-wide sm:text-base md:text-lg lg:text-xl xl:text-2xl ${
+                    darkMode
+                      ? "text-white"
+                      : "text-gray-900"
+                  }`}
+                  title="IPL Cricket Dashboard"
+                >
+                  IPL Cricket Dashboard
+                </h1>
+
+                <div
+                  className={`mt-0.5 hidden items-center gap-1.5 text-[10px] sm:flex sm:text-xs ${
+                    darkMode
+                      ? "text-gray-400"
+                      : "text-gray-500"
+                  }`}
+                >
+                  <CalendarDays
+                    size={12}
+                    className="shrink-0 sm:size-[14px]"
+                  />
+
+                  <span className="truncate">
+                    {today}
+                  </span>
+                </div>
+
+              </div>
+
             </div>
 
-            {/* Title */}
+            {/* RIGHT */}
 
-            <div>
+            <div className="flex shrink-0 items-center gap-1.5 sm:gap-2 md:gap-3">
 
-              <h1
-                className="
-                text-3xl
-                font-black
-                tracking-wide
-                "
+              {/* DESKTOP SEARCH */}
+
+              <div className="relative hidden lg:block">
+
+                <Search
+                  size={17}
+                  className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
+                />
+
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) =>
+                    setSearch(e.target.value)
+                  }
+                  placeholder="Search Player, Team..."
+                  className={`h-10 w-[220px] rounded-xl border pl-10 pr-4 text-xs outline-none transition-all duration-300 xl:w-[280px] ${
+                    darkMode
+                      ? "border-slate-700 bg-slate-800/80 text-white placeholder-gray-500 focus:border-orange-500/50 focus:ring-2 focus:ring-orange-500/10"
+                      : "border-gray-200 bg-gray-100 text-gray-800 placeholder-gray-400 focus:border-orange-500/50 focus:ring-2 focus:ring-orange-500/10"
+                  }`}
+                />
+
+              </div>
+
+              {/* THEME */}
+
+              <button
+                type="button"
+                onClick={toggleTheme}
+                aria-label="Toggle theme"
+                className={`flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-300 hover:scale-105 sm:h-11 sm:w-11 sm:rounded-2xl ${
+                  darkMode
+                    ? "bg-slate-800/80 hover:bg-slate-700"
+                    : "bg-white shadow-md hover:bg-gray-50"
+                }`}
               >
-                IPL Cricket Dashboard
-              </h1>
+                {darkMode ? (
+                  <Sun
+                    className="text-yellow-400"
+                    size={18}
+                  />
+                ) : (
+                  <Moon
+                    className="text-indigo-700"
+                    size={18}
+                  />
+                )}
+              </button>
+
+              {/* NOTIFICATION */}
+
+              <button
+                type="button"
+                aria-label="Notifications"
+                className={`relative flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-300 hover:scale-105 sm:h-11 sm:w-11 sm:rounded-2xl ${
+                  darkMode
+                    ? "bg-slate-800/80 hover:bg-slate-700"
+                    : "bg-white shadow-md hover:bg-gray-50"
+                }`}
+              >
+                <Bell
+                  size={18}
+                  className={
+                    darkMode
+                      ? "text-slate-200"
+                      : "text-gray-700"
+                  }
+                />
+
+                <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500" />
+              </button>
+
+              {/* PROFILE */}
 
               <div
-                className="
-                flex
-                items-center
-                gap-2
-                mt-1
-                text-sm
-                text-gray-500
-                "
+                className={`flex h-10 cursor-pointer items-center gap-2 rounded-xl px-2 sm:h-11 sm:gap-2.5 sm:px-3 md:rounded-2xl md:px-4 ${
+                  darkMode
+                    ? "bg-slate-800/80 hover:bg-slate-700"
+                    : "bg-white shadow-md hover:bg-gray-50"
+                } transition-all duration-300`}
               >
-                <CalendarDays size={16} />
 
-                <span>{today}</span>
+                <UserCircle
+                  size={27}
+                  className="shrink-0 text-orange-500 sm:size-[32px] md:size-[36px]"
+                />
+
+                <div className="hidden xl:block">
+                  <h3
+                    className={`text-xs font-bold ${
+                      darkMode
+                        ? "text-white"
+                        : "text-gray-900"
+                    }`}
+                  >
+                    Admin
+                  </h3>
+
+                  <p
+                    className={`text-[10px] ${
+                      darkMode
+                        ? "text-gray-400"
+                        : "text-gray-500"
+                    }`}
+                  >
+                    IPL Analyst
+                  </p>
+                </div>
+
+                <ChevronDown
+                  size={15}
+                  className="hidden text-gray-500 sm:block"
+                />
 
               </div>
 
@@ -133,225 +246,57 @@ function Navbar() {
 
           </div>
 
+          {/* =====================================================
+              MOBILE DATE
+          ====================================================== */}
 
+          <div
+            className={`mt-2 flex items-center gap-1.5 text-[10px] sm:hidden ${
+              darkMode
+                ? "text-gray-500"
+                : "text-gray-500"
+            }`}
+          >
+            <CalendarDays size={12} />
 
-                    {/* ========================= */}
-          {/* RIGHT SECTION */}
-          {/* ========================= */}
+            <span className="truncate">
+              {today}
+            </span>
+          </div>
 
-          <div className="flex items-center gap-5">
+          {/* =====================================================
+              MOBILE / TABLET SEARCH
+          ====================================================== */}
 
-            {/* Search Box */}
+          <div className="mt-3 lg:hidden">
 
-            <div className="hidden md:flex relative">
+            <div className="relative">
 
               <Search
-                size={18}
-                className="
-                absolute
-                left-4
-                top-1/2
-                -translate-y-1/2
-                text-gray-400
-                "
+                size={16}
+                className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
               />
 
               <input
                 type="text"
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search Player, Team..."
-                className={`
-                w-80
-                pl-12
-                pr-5
-                py-3
-                rounded-2xl
-                outline-none
-                border
-                transition-all
-                duration-300
-                focus:ring-2
-                focus:ring-orange-500
-
-                ${
-                  darkMode
-                    ? "bg-slate-800 border-slate-700 text-white placeholder-gray-400"
-                    : "bg-gray-100 border-gray-200 text-gray-800"
+                onChange={(e) =>
+                  setSearch(e.target.value)
                 }
-                `}
+                placeholder="Search Player, Team..."
+                className={`h-11 w-full rounded-xl border pl-10 pr-4 text-xs outline-none transition-all duration-300 sm:h-12 sm:text-sm ${
+                  darkMode
+                    ? "border-slate-700 bg-slate-800/80 text-white placeholder-gray-500 focus:border-orange-500/50 focus:ring-2 focus:ring-orange-500/10"
+                    : "border-gray-200 bg-gray-100 text-gray-800 placeholder-gray-400 focus:border-orange-500/50 focus:ring-2 focus:ring-orange-500/10"
+                }`}
               />
 
             </div>
-
-            {/* Theme Button */}
-
-            <button
-              onClick={toggleTheme}
-              className={`
-              p-3
-              rounded-2xl
-              transition-all
-              duration-300
-              hover:scale-110
-
-              ${
-                darkMode
-                  ? "bg-slate-800"
-                  : "bg-white shadow-lg"
-              }
-              `}
-            >
-              {darkMode ? (
-                <Sun className="text-yellow-400" size={20} />
-              ) : (
-                <Moon className="text-indigo-700" size={20} />
-              )}
-            </button>
-
-            {/* Notification */}
-
-            <button
-              className={`
-              relative
-              p-3
-              rounded-2xl
-              transition-all
-              duration-300
-              hover:scale-110
-
-              ${
-                darkMode
-                  ? "bg-slate-800"
-                  : "bg-white shadow-lg"
-              }
-              `}
-            >
-
-              <Bell size={20} />
-
-              <span
-                className="
-                absolute
-                top-2
-                right-2
-                w-2.5
-                h-2.5
-                rounded-full
-                bg-red-500
-                animate-pulse
-                "
-              ></span>
-
-            </button>
-
-            {/* Profile */}
-
-            <div
-              className={`
-              flex
-              items-center
-              gap-3
-              px-4
-              py-2
-              rounded-2xl
-              cursor-pointer
-              transition-all
-              duration-300
-              hover:scale-105
-
-              ${
-                darkMode
-                  ? "bg-slate-800"
-                  : "bg-white shadow-lg"
-              }
-              `}
-            >
-
-              <UserCircle
-                size={42}
-                className="text-orange-500"
-              />
-
-              <div className="hidden md:block">
-
-                <h3 className="font-bold">
-                  Admin
-                </h3>
-
-                <p
-                  className={`
-                  text-xs
-
-                  ${
-                    darkMode
-                      ? "text-gray-400"
-                      : "text-gray-500"
-                  }
-                  `}
-                >
-                  IPL Analyst
-                </p>
-
-              </div>
-
-              <ChevronDown
-                size={18}
-                className="text-gray-500"
-              />
-
-            </div>
-
-          </div>
-
-        </div> 
-         
-
-                 {/* Mobile Search */}
-
-        <div className="mt-5 md:hidden">
-
-          <div className="relative">
-
-            <Search
-              size={18}
-              className="
-              absolute
-              left-4
-              top-1/2
-              -translate-y-1/2
-              text-gray-400
-              "
-            />
-
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search Player..."
-              className={`
-              w-full
-              pl-12
-              pr-4
-              py-3
-              rounded-2xl
-              outline-none
-              border
-
-              ${
-                darkMode
-                  ? "bg-slate-800 border-slate-700 text-white placeholder-gray-400"
-                  : "bg-gray-100 border-gray-200"
-              }
-              `}
-            />
 
           </div>
 
         </div>
-
       </div>
-
     </header>
   );
 }
