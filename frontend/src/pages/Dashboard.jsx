@@ -43,12 +43,24 @@ function Dashboard() {
   const [topBatsmen, setTopBatsmen] = useState([]);
   const [topBowlers, setTopBowlers] = useState([]);
 
+  const [teamWins, setTeamWins] = useState([]);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  /* =========================================================
+     LOAD DASHBOARD
+  ========================================================= */
+
   useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: "instant",
+    });
+
     loadDashboard();
   }, []);
 
@@ -75,6 +87,7 @@ function Dashboard() {
         purpleData,
         batsmenData,
         bowlersData,
+        teamWinsData,
       ] = await Promise.all([
         safeGet(`${BASE_URL}/total_matches`, 0),
         safeGet(`${BASE_URL}/total_teams`, 0),
@@ -83,6 +96,7 @@ function Dashboard() {
         safeGet(`${BASE_URL}/purple_cap`, null),
         safeGet(`${BASE_URL}/top_batsman`, {}),
         safeGet(`${BASE_URL}/top_bowlers`, {}),
+        safeGet(`${BASE_URL}/team_wins_chart`, []),
       ]);
 
       console.log("MATCHES:", matchesData);
@@ -92,6 +106,7 @@ function Dashboard() {
       console.log("PURPLE:", purpleData);
       console.log("BATSMEN:", batsmenData);
       console.log("BOWLERS:", bowlersData);
+      console.log("TEAM WINS:", teamWinsData);
 
       setMatches(extractNumber(matchesData));
       setTeams(extractNumber(teamsData));
@@ -102,12 +117,21 @@ function Dashboard() {
 
       const batsmen = normalizeBatsmen(batsmenData);
       const bowlers = normalizeBowlers(bowlersData);
+      const normalizedTeamWins =
+        normalizeTeamWins(teamWinsData);
 
       setTopBatsmen(batsmen);
       setTopBowlers(bowlers);
+      setTeamWins(normalizedTeamWins);
 
-      if (batsmen.length === 0 && bowlers.length === 0) {
-        setError("Batting and bowling data not available.");
+      if (
+        batsmen.length === 0 &&
+        bowlers.length === 0 &&
+        normalizedTeamWins.length === 0
+      ) {
+        setError(
+          "Dashboard analytics data is currently unavailable."
+        );
       }
     } catch (err) {
       console.error("Dashboard Error:", err);
@@ -132,7 +156,7 @@ function Dashboard() {
   }, [topBowlers]);
 
   return (
-    <div className="min-h-screen bg-[#050914] text-white">
+    <div className="min-h-screen w-full overflow-x-hidden bg-[#050914] text-white">
       {/* =====================================================
           SIDEBAR
       ===================================================== */}
@@ -147,540 +171,627 @@ function Dashboard() {
       ===================================================== */}
 
       <div className="flex min-h-screen w-full min-w-0">
+        {/* Desktop sidebar reservation */}
         <div className="hidden w-[250px] shrink-0 lg:block" />
+
         <div className="min-w-0 flex-1 overflow-x-hidden">
-        {/* =====================================================
-            NAVBAR
-        ===================================================== */}
-
-        <Navbar
-          onMenuClick={() => setSidebarOpen(true)}
-        />
-
-        {/* =====================================================
-            CONTENT
-        ===================================================== */}
-
-        <main className="w-full min-w-0 overflow-x-hidden px-4 py-6 sm:px-6 lg:px-8">
           {/* =================================================
-              HEADER
+              NAVBAR
           ================================================= */}
 
-          <div className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div className="min-w-0">
-              <div className="mb-2 flex items-center gap-2">
-                <span className="h-2 w-2 shrink-0 rounded-full bg-orange-500" />
+          <Navbar
+            onMenuClick={() => setSidebarOpen(true)}
+          />
 
-                <span className="text-[9px] font-black uppercase tracking-[3px] text-orange-400">
-                  IPL Analytics
-                </span>
+          {/* =================================================
+              CONTENT
+          ================================================= */}
+
+          <main className="w-full min-w-0 overflow-x-hidden px-4 py-6 sm:px-6 lg:px-8">
+            {/* =================================================
+                HEADER
+            ================================================= */}
+
+            <div className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+              <div className="min-w-0">
+                <div className="mb-2 flex items-center gap-2">
+                  <span className="h-2 w-2 shrink-0 rounded-full bg-orange-500" />
+
+                  <span className="text-[9px] font-black uppercase tracking-[3px] text-orange-400">
+                    IPL Analytics
+                  </span>
+                </div>
+
+                <h1 className="text-3xl font-black tracking-tight text-white sm:text-4xl">
+                  Cricket Dashboard
+                </h1>
+
+                <p className="mt-2 max-w-xl text-xs leading-5 text-slate-500">
+                  Explore IPL matches, teams, players, batting and
+                  bowling performance from your dataset.
+                </p>
               </div>
 
-              <h1 className="text-3xl font-black tracking-tight text-white sm:text-4xl">
-                Cricket Dashboard
-              </h1>
+              <button
+                type="button"
+                onClick={loadDashboard}
+                disabled={loading}
+                className="flex w-fit shrink-0 items-center gap-2 rounded-xl border border-white/[0.07] bg-white/[0.025] px-4 py-3 text-[9px] font-black uppercase tracking-wider text-slate-400 transition hover:border-orange-400/20 hover:text-orange-400 disabled:opacity-50"
+              >
+                <RefreshCw
+                  size={14}
+                  className={
+                    loading ? "animate-spin" : ""
+                  }
+                />
 
-              <p className="mt-2 max-w-xl text-xs leading-5 text-slate-500">
-                Explore IPL matches, teams, players, batting and bowling
-                performance from your dataset.
-              </p>
+                Refresh
+              </button>
             </div>
 
-            <button
-              type="button"
-              onClick={loadDashboard}
-              disabled={loading}
-              className="flex w-fit shrink-0 items-center gap-2 rounded-xl border border-white/[0.07] bg-white/[0.025] px-4 py-3 text-[9px] font-black uppercase tracking-wider text-slate-400 transition hover:border-orange-400/20 hover:text-orange-400 disabled:opacity-50"
-            >
-              <RefreshCw
-                size={14}
-                className={loading ? "animate-spin" : ""}
+            {/* =================================================
+                ERROR
+            ================================================= */}
+
+            {error && (
+              <div className="mb-6 flex items-start gap-3 rounded-2xl border border-red-400/10 bg-red-500/[0.05] p-4">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-red-500/10 text-red-400">
+                  <AlertCircle size={17} />
+                </div>
+
+                <div className="min-w-0">
+                  <p className="text-xs font-black text-red-300">
+                    Dashboard Data Notice
+                  </p>
+
+                  <p className="mt-1 text-[10px] text-red-400/70">
+                    {error}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* =================================================
+                STAT CARDS
+            ================================================= */}
+
+            <div className="grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+              <DashboardCard
+                title="Total Matches"
+                value={
+                  loading
+                    ? "..."
+                    : String(matches)
+                }
+                icon={Trophy}
+                color="orange"
               />
 
-              Refresh
-            </button>
-          </div>
+              <DashboardCard
+                title="Total Teams"
+                value={
+                  loading
+                    ? "..."
+                    : String(teams)
+                }
+                icon={ShieldCheck}
+                color="blue"
+              />
 
-          {/* =================================================
-              ERROR
-          ================================================= */}
+              <DashboardCard
+                title="Total Players"
+                value={
+                  loading
+                    ? "..."
+                    : String(players)
+                }
+                icon={Users}
+                color="purple"
+              />
 
-          {error && (
-            <div className="mb-6 flex items-start gap-3 rounded-2xl border border-red-400/10 bg-red-500/[0.05] p-4">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-red-500/10 text-red-400">
-                <AlertCircle size={17} />
-              </div>
+              <DashboardCard
+                title="Orange Cap"
+                value={
+                  loading
+                    ? "..."
+                    : orangeCap?.name ||
+                      "N/A"
+                }
+                icon={Target}
+                color="orange"
+              />
 
-              <div className="min-w-0">
-                <p className="text-xs font-black text-red-300">
-                  Dashboard Data Notice
-                </p>
-
-                <p className="mt-1 text-[10px] text-red-400/70">
-                  {error}
-                </p>
-              </div>
+              <DashboardCard
+                title="Purple Cap"
+                value={
+                  loading
+                    ? "..."
+                    : purpleCap?.name ||
+                      "N/A"
+                }
+                icon={Flame}
+                color="purple"
+              />
             </div>
-          )}
 
-          {/* =================================================
-              STAT CARDS
-          ================================================= */}
+            {/* =================================================
+                CAP CARDS
+            ================================================= */}
 
-          <div className="grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-5">
-            <DashboardCard
-              title="Total Matches"
-              value={loading ? "..." : String(matches)}
-              icon={Trophy}
-              color="orange"
-            />
+            <div className="mt-6 grid min-w-0 gap-4 lg:grid-cols-2">
+              {/* ORANGE CAP */}
 
-            <DashboardCard
-              title="Total Teams"
-              value={loading ? "..." : String(teams)}
-              icon={ShieldCheck}
-              color="blue"
-            />
+              <div className="min-w-0 overflow-hidden rounded-[22px] border border-orange-400/10 bg-gradient-to-br from-orange-500/[0.07] to-[#0a101d] p-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <p className="text-[8px] font-black uppercase tracking-[2px] text-orange-400">
+                      Orange Cap
+                    </p>
 
-            <DashboardCard
-              title="Total Players"
-              value={loading ? "..." : String(players)}
-              icon={Users}
-              color="purple"
-            />
+                    <h2
+                      className="mt-2 truncate text-xl font-black text-white"
+                      title={
+                        orangeCap?.name ||
+                        "No Data"
+                      }
+                    >
+                      {orangeCap?.name ||
+                        "No Data"}
+                    </h2>
+                  </div>
 
-            <DashboardCard
-              title="Orange Cap"
-              value={
-                loading
-                  ? "..."
-                  : orangeCap?.name || "N/A"
-              }
-              icon={Target}
-              color="orange"
-            />
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-orange-500/10 text-orange-400">
+                    <Trophy size={21} />
+                  </div>
+                </div>
 
-            <DashboardCard
-              title="Purple Cap"
-              value={
-                loading
-                  ? "..."
-                  : purpleCap?.name || "N/A"
-              }
-              icon={Flame}
-              color="purple"
-            />
-          </div>
-
-          {/* =================================================
-              CAP CARDS
-          ================================================= */}
-
-          <div className="mt-6 grid min-w-0 gap-4 lg:grid-cols-2">
-            {/* ORANGE CAP */}
-
-            <div className="min-w-0 overflow-hidden rounded-[22px] border border-orange-400/10 bg-gradient-to-br from-orange-500/[0.07] to-[#0a101d] p-5">
-              <div className="flex items-start justify-between gap-4">
-                <div className="min-w-0">
-                  <p className="text-[8px] font-black uppercase tracking-[2px] text-orange-400">
-                    Orange Cap
+                <div className="mt-5">
+                  <p className="text-[8px] font-black uppercase tracking-wider text-slate-600">
+                    Total Runs
                   </p>
 
-                  <h2
-                    className="mt-2 truncate text-xl font-black text-white"
-                    title={orangeCap?.name || "No Data"}
-                  >
-                    {orangeCap?.name || "No Data"}
-                  </h2>
-                </div>
-
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-orange-500/10 text-orange-400">
-                  <Trophy size={21} />
+                  <p className="mt-1 text-3xl font-black text-orange-300">
+                    {Number(
+                      orangeCap?.value
+                    ) || 0}
+                  </p>
                 </div>
               </div>
 
-              <div className="mt-5">
-                <p className="text-[8px] font-black uppercase tracking-wider text-slate-600">
-                  Total Runs
-                </p>
+              {/* PURPLE CAP */}
 
-                <p className="mt-1 text-3xl font-black text-orange-300">
-                  {Number(orangeCap?.value) || 0}
-                </p>
-              </div>
-            </div>
+              <div className="min-w-0 overflow-hidden rounded-[22px] border border-purple-400/10 bg-gradient-to-br from-purple-500/[0.07] to-[#0a101d] p-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <p className="text-[8px] font-black uppercase tracking-[2px] text-purple-400">
+                      Purple Cap
+                    </p>
 
-            {/* PURPLE CAP */}
+                    <h2
+                      className="mt-2 truncate text-xl font-black text-white"
+                      title={
+                        purpleCap?.name ||
+                        "No Data"
+                      }
+                    >
+                      {purpleCap?.name ||
+                        "No Data"}
+                    </h2>
+                  </div>
 
-            <div className="min-w-0 overflow-hidden rounded-[22px] border border-purple-400/10 bg-gradient-to-br from-purple-500/[0.07] to-[#0a101d] p-5">
-              <div className="flex items-start justify-between gap-4">
-                <div className="min-w-0">
-                  <p className="text-[8px] font-black uppercase tracking-[2px] text-purple-400">
-                    Purple Cap
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-purple-500/10 text-purple-400">
+                    <Flame size={21} />
+                  </div>
+                </div>
+
+                <div className="mt-5">
+                  <p className="text-[8px] font-black uppercase tracking-wider text-slate-600">
+                    Total Wickets
                   </p>
 
-                  <h2
-                    className="mt-2 truncate text-xl font-black text-white"
-                    title={purpleCap?.name || "No Data"}
-                  >
-                    {purpleCap?.name || "No Data"}
-                  </h2>
+                  <p className="mt-1 text-3xl font-black text-purple-300">
+                    {Number(
+                      purpleCap?.value
+                    ) || 0}
+                  </p>
                 </div>
-
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-purple-500/10 text-purple-400">
-                  <Flame size={21} />
-                </div>
-              </div>
-
-              <div className="mt-5">
-                <p className="text-[8px] font-black uppercase tracking-wider text-slate-600">
-                  Total Wickets
-                </p>
-
-                <p className="mt-1 text-3xl font-black text-purple-300">
-                  {Number(purpleCap?.value) || 0}
-                </p>
               </div>
             </div>
-          </div>
 
-          {/* =================================================
-              BATTING + BOWLING
-          ================================================= */}
+            {/* =================================================
+                BATTING + BOWLING
+            ================================================= */}
 
-          <div className="mt-6 grid min-w-0 gap-5 xl:grid-cols-2">
-            {/* TOP BATSMEN */}
+            <div className="mt-6 grid min-w-0 gap-5 xl:grid-cols-2">
+              {/* TOP BATSMEN */}
 
-            <div className="min-w-0 overflow-hidden rounded-[22px] border border-white/[0.06] bg-[#080e1a] p-5">
+              <div className="min-w-0 overflow-hidden rounded-[22px] border border-white/[0.06] bg-[#080e1a] p-5">
+                <div className="mb-5 flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-[8px] font-black uppercase tracking-[2px] text-orange-400">
+                      Batting
+                    </p>
+
+                    <h2 className="mt-1 text-lg font-black text-white">
+                      Top 10 Batsmen
+                    </h2>
+                  </div>
+
+                  <Target
+                    size={19}
+                    className="shrink-0 text-orange-400"
+                  />
+                </div>
+
+                {battingChartData.length >
+                0 ? (
+                  <div className="h-[390px] w-full min-w-0">
+                    <ResponsiveContainer
+                      width="100%"
+                      height="100%"
+                    >
+                      <BarChart
+                        data={
+                          battingChartData
+                        }
+                        margin={{
+                          top: 10,
+                          right: 15,
+                          left: 0,
+                          bottom: 75,
+                        }}
+                      >
+                        <CartesianGrid
+                          strokeDasharray="3 3"
+                          vertical={false}
+                          stroke="rgba(255,255,255,0.08)"
+                        />
+
+                        <XAxis
+                          dataKey="name"
+                          interval={0}
+                          angle={-35}
+                          textAnchor="end"
+                          height={85}
+                          tick={{
+                            fill: "#64748b",
+                            fontSize: 10,
+                            fontWeight: 700,
+                          }}
+                          axisLine={false}
+                          tickLine={false}
+                        />
+
+                        <YAxis
+                          allowDecimals={false}
+                          tick={{
+                            fill: "#64748b",
+                            fontSize: 10,
+                          }}
+                          axisLine={false}
+                          tickLine={false}
+                        />
+
+                        <Tooltip
+                          cursor={{
+                            fill: "rgba(255,255,255,0.03)",
+                          }}
+                          formatter={(value) => [
+                            `${Number(
+                              value
+                            ).toLocaleString()} Runs`,
+                            "Runs",
+                          ]}
+                          labelFormatter={(
+                            label
+                          ) =>
+                            String(
+                              label
+                            )
+                          }
+                          contentStyle={{
+                            background:
+                              "#0b1220",
+                            border:
+                              "1px solid rgba(255,255,255,0.08)",
+                            borderRadius:
+                              "12px",
+                            color:
+                              "#fff",
+                          }}
+                        />
+
+                        <Bar
+                          dataKey="value"
+                          name="Runs"
+                          fill="#f97316"
+                          radius={[
+                            8,
+                            8,
+                            0,
+                            0,
+                          ]}
+                          maxBarSize={45}
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                ) : (
+                  <EmptyState text="No batting data available" />
+                )}
+              </div>
+
+              {/* TOP BOWLERS */}
+
+              <div className="min-w-0 overflow-hidden rounded-[22px] border border-white/[0.06] bg-[#080e1a] p-5">
+                <div className="mb-5 flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-[8px] font-black uppercase tracking-[2px] text-purple-400">
+                      Bowling
+                    </p>
+
+                    <h2 className="mt-1 text-lg font-black text-white">
+                      Top 10 Bowlers
+                    </h2>
+                  </div>
+
+                  <ShieldCheck
+                    size={19}
+                    className="shrink-0 text-purple-400"
+                  />
+                </div>
+
+                {bowlingChartData.length >
+                0 ? (
+                  <div className="h-[390px] w-full min-w-0">
+                    <ResponsiveContainer
+                      width="100%"
+                      height="100%"
+                    >
+                      <BarChart
+                        data={
+                          bowlingChartData
+                        }
+                        margin={{
+                          top: 10,
+                          right: 15,
+                          left: 0,
+                          bottom: 75,
+                        }}
+                      >
+                        <CartesianGrid
+                          strokeDasharray="3 3"
+                          vertical={false}
+                          stroke="rgba(255,255,255,0.08)"
+                        />
+
+                        <XAxis
+                          dataKey="name"
+                          interval={0}
+                          angle={-35}
+                          textAnchor="end"
+                          height={85}
+                          tick={{
+                            fill: "#64748b",
+                            fontSize: 10,
+                            fontWeight: 700,
+                          }}
+                          axisLine={false}
+                          tickLine={false}
+                        />
+
+                        <YAxis
+                          allowDecimals={false}
+                          tick={{
+                            fill: "#64748b",
+                            fontSize: 10,
+                          }}
+                          axisLine={false}
+                          tickLine={false}
+                        />
+
+                        <Tooltip
+                          cursor={{
+                            fill: "rgba(255,255,255,0.03)",
+                          }}
+                          formatter={(value) => [
+                            `${Number(
+                              value
+                            ).toLocaleString()} Wickets`,
+                            "Wickets",
+                          ]}
+                          labelFormatter={(
+                            label
+                          ) =>
+                            String(
+                              label
+                            )
+                          }
+                          contentStyle={{
+                            background:
+                              "#0b1220",
+                            border:
+                              "1px solid rgba(255,255,255,0.08)",
+                            borderRadius:
+                              "12px",
+                            color:
+                              "#fff",
+                          }}
+                        />
+
+                        <Bar
+                          dataKey="value"
+                          name="Wickets"
+                          fill="#a855f7"
+                          radius={[
+                            8,
+                            8,
+                            0,
+                            0,
+                          ]}
+                          maxBarSize={45}
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                ) : (
+                  <EmptyState text="No bowling data available" />
+                )}
+              </div>
+            </div>
+
+            {/* =================================================
+                TOP BATSMEN TABLE
+            ================================================= */}
+
+            <div className="mt-6 min-w-0 overflow-hidden rounded-[22px] border border-white/[0.06] bg-[#080e1a] p-5">
               <div className="mb-5 flex items-center justify-between gap-3">
-                <div className="min-w-0">
+                <div>
                   <p className="text-[8px] font-black uppercase tracking-[2px] text-orange-400">
-                    Batting
+                    Leaderboard
                   </p>
 
                   <h2 className="mt-1 text-lg font-black text-white">
-                    Top 10 Batsmen
+                    Top Batsmen
                   </h2>
                 </div>
 
-                <Target
+                <UserRound
                   size={19}
                   className="shrink-0 text-orange-400"
                 />
               </div>
 
-              {battingChartData.length > 0 ? (
-                <div className="h-[390px] w-full min-w-0">
-                  <ResponsiveContainer
-                    width="100%"
-                    height="100%"
-                  >
-                    <BarChart
-                      data={battingChartData}
-                      margin={{
-                        top: 10,
-                        right: 15,
-                        left: 0,
-                        bottom: 75,
-                      }}
-                    >
-                      <CartesianGrid
-                        strokeDasharray="3 3"
-                        vertical={false}
-                        stroke="rgba(255,255,255,0.08)"
-                      />
+              {topBatsmen.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[520px] border-collapse">
+                    <thead>
+                      <tr className="border-b border-white/[0.06]">
+                        <th className="px-4 py-3 text-left text-[8px] font-black uppercase tracking-wider text-slate-600">
+                          #
+                        </th>
 
-                      <XAxis
-                        dataKey="name"
-                        interval={0}
-                        angle={-35}
-                        textAnchor="end"
-                        height={85}
-                        tick={{
-                          fill: "#64748b",
-                          fontSize: 10,
-                          fontWeight: 700,
-                        }}
-                        axisLine={false}
-                        tickLine={false}
-                      />
+                        <th className="px-4 py-3 text-left text-[8px] font-black uppercase tracking-wider text-slate-600">
+                          Player
+                        </th>
 
-                      <YAxis
-                        allowDecimals={false}
-                        tick={{
-                          fill: "#64748b",
-                          fontSize: 10,
-                        }}
-                        axisLine={false}
-                        tickLine={false}
-                      />
+                        <th className="px-4 py-3 text-right text-[8px] font-black uppercase tracking-wider text-slate-600">
+                          Runs
+                        </th>
+                      </tr>
+                    </thead>
 
-                      <Tooltip
-                        cursor={{
-                          fill: "rgba(255,255,255,0.03)",
-                        }}
-                        formatter={(value) => [
-                          `${Number(value).toLocaleString()} Runs`,
-                          "Runs",
-                        ]}
-                        labelFormatter={(label) =>
-                          String(label)
-                        }
-                        contentStyle={{
-                          background: "#0b1220",
-                          border:
-                            "1px solid rgba(255,255,255,0.08)",
-                          borderRadius: "12px",
-                          color: "#fff",
-                        }}
-                      />
+                    <tbody>
+                      {topBatsmen.map(
+                        (item, index) => (
+                          <tr
+                            key={`${item.name}-${index}`}
+                            className="border-b border-white/[0.04] transition hover:bg-white/[0.02]"
+                          >
+                            <td className="px-4 py-4 text-xs font-black text-slate-600">
+                              {String(
+                                index + 1
+                              ).padStart(
+                                2,
+                                "0"
+                              )}
+                            </td>
 
-                      <Bar
-                        dataKey="value"
-                        name="Runs"
-                        fill="#f97316"
-                        radius={[8, 8, 0, 0]}
-                        maxBarSize={45}
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
+                            <td className="px-4 py-4">
+                              <div className="flex items-center gap-3">
+                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-orange-500/10 text-[9px] font-black text-orange-400">
+                                  {getInitials(
+                                    item.name
+                                  )}
+                                </div>
+
+                                <span className="whitespace-nowrap text-xs font-bold text-slate-300">
+                                  {item.name}
+                                </span>
+                              </div>
+                            </td>
+
+                            <td className="px-4 py-4 text-right text-sm font-black text-orange-300">
+                              {Number(
+                                item.value ||
+                                  0
+                              ).toLocaleString()}
+                            </td>
+                          </tr>
+                        )
+                      )}
+                    </tbody>
+                  </table>
                 </div>
               ) : (
                 <EmptyState text="No batting data available" />
               )}
             </div>
 
-            {/* TOP BOWLERS */}
+            {/* =================================================
+                TEAM CHARTS
+            ================================================= */}
 
-            <div className="min-w-0 overflow-hidden rounded-[22px] border border-white/[0.06] bg-[#080e1a] p-5">
-              <div className="mb-5 flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-[8px] font-black uppercase tracking-[2px] text-purple-400">
-                    Bowling
-                  </p>
+            <div className="mt-6 grid min-w-0 gap-5 xl:grid-cols-2">
+              <div className="min-w-0 overflow-hidden rounded-[22px] border border-white/[0.06] bg-[#080e1a] p-5">
+                <div className="mb-5 flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-[8px] font-black uppercase tracking-[2px] text-blue-400">
+                      Team Intelligence
+                    </p>
 
-                  <h2 className="mt-1 text-lg font-black text-white">
-                    Top 10 Bowlers
-                  </h2>
+                    <h2 className="mt-1 text-lg font-black text-white">
+                      Team Performance
+                    </h2>
+                  </div>
+
+                  <BarChart3
+                    size={19}
+                    className="shrink-0 text-blue-400"
+                  />
                 </div>
 
-                <ShieldCheck
-                  size={19}
-                  className="shrink-0 text-purple-400"
-                />
-              </div>
-
-              {bowlingChartData.length > 0 ? (
-                <div className="h-[390px] w-full min-w-0">
-                  <ResponsiveContainer
-                    width="100%"
-                    height="100%"
-                  >
-                    <BarChart
-                      data={bowlingChartData}
-                      margin={{
-                        top: 10,
-                        right: 15,
-                        left: 0,
-                        bottom: 75,
-                      }}
-                    >
-                      <CartesianGrid
-                        strokeDasharray="3 3"
-                        vertical={false}
-                        stroke="rgba(255,255,255,0.08)"
-                      />
-
-                      <XAxis
-                        dataKey="name"
-                        interval={0}
-                        angle={-35}
-                        textAnchor="end"
-                        height={85}
-                        tick={{
-                          fill: "#64748b",
-                          fontSize: 10,
-                          fontWeight: 700,
-                        }}
-                        axisLine={false}
-                        tickLine={false}
-                      />
-
-                      <YAxis
-                        allowDecimals={false}
-                        tick={{
-                          fill: "#64748b",
-                          fontSize: 10,
-                        }}
-                        axisLine={false}
-                        tickLine={false}
-                      />
-
-                      <Tooltip
-                        cursor={{
-                          fill: "rgba(255,255,255,0.03)",
-                        }}
-                        formatter={(value) => [
-                          `${Number(value).toLocaleString()} Wickets`,
-                          "Wickets",
-                        ]}
-                        labelFormatter={(label) =>
-                          String(label)
-                        }
-                        contentStyle={{
-                          background: "#0b1220",
-                          border:
-                            "1px solid rgba(255,255,255,0.08)",
-                          borderRadius: "12px",
-                          color: "#fff",
-                        }}
-                      />
-
-                      <Bar
-                        dataKey="value"
-                        name="Wickets"
-                        fill="#a855f7"
-                        radius={[8, 8, 0, 0]}
-                        maxBarSize={45}
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
+                <div className="min-w-0 overflow-hidden">
+                  <TeamWinsChart
+                    data={teamWins}
+                  />
                 </div>
-              ) : (
-                <EmptyState text="No bowling data available" />
-              )}
-            </div>
-          </div>
-
-          {/* =================================================
-              TOP BATSMEN TABLE
-          ================================================= */}
-
-          <div className="mt-6 min-w-0 overflow-hidden rounded-[22px] border border-white/[0.06] bg-[#080e1a] p-5">
-            <div className="mb-5 flex items-center justify-between gap-3">
-              <div>
-                <p className="text-[8px] font-black uppercase tracking-[2px] text-orange-400">
-                  Leaderboard
-                </p>
-
-                <h2 className="mt-1 text-lg font-black text-white">
-                  Top Batsmen
-                </h2>
               </div>
 
-              <UserRound
-                size={19}
-                className="shrink-0 text-orange-400"
-              />
-            </div>
+              <div className="min-w-0 overflow-hidden rounded-[22px] border border-white/[0.06] bg-[#080e1a] p-5">
+                <div className="mb-5 flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-[8px] font-black uppercase tracking-[2px] text-emerald-400">
+                      Team Intelligence
+                    </p>
 
-            {topBatsmen.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[520px] border-collapse">
-                  <thead>
-                    <tr className="border-b border-white/[0.06]">
-                      <th className="px-4 py-3 text-left text-[8px] font-black uppercase tracking-wider text-slate-600">
-                        #
-                      </th>
+                    <h2 className="mt-1 text-lg font-black text-white">
+                      Team Distribution
+                    </h2>
+                  </div>
 
-                      <th className="px-4 py-3 text-left text-[8px] font-black uppercase tracking-wider text-slate-600">
-                        Player
-                      </th>
+                  <BarChart3
+                    size={19}
+                    className="shrink-0 text-emerald-400"
+                  />
+                </div>
 
-                      <th className="px-4 py-3 text-right text-[8px] font-black uppercase tracking-wider text-slate-600">
-                        Runs
-                      </th>
-                    </tr>
-                  </thead>
-
-                  <tbody>
-                    {topBatsmen.map((item, index) => (
-                      <tr
-                        key={`${item.name}-${index}`}
-                        className="border-b border-white/[0.04] transition hover:bg-white/[0.02]"
-                      >
-                        <td className="px-4 py-4 text-xs font-black text-slate-600">
-                          {String(index + 1).padStart(
-                            2,
-                            "0"
-                          )}
-                        </td>
-
-                        <td className="px-4 py-4">
-                          <div className="flex items-center gap-3">
-                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-orange-500/10 text-[9px] font-black text-orange-400">
-                              {getInitials(item.name)}
-                            </div>
-
-                            <span className="whitespace-nowrap text-xs font-bold text-slate-300">
-                              {item.name}
-                            </span>
-                          </div>
-                        </td>
-
-                        <td className="px-4 py-4 text-right text-sm font-black text-orange-300">
-                          {Number(
-                            item.value || 0
-                          ).toLocaleString()}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <EmptyState text="No batting data available" />
-            )}
-          </div>
-
-          {/* =================================================
-              TEAM CHARTS
-          ================================================= */}
-
-          <div className="mt-6 grid min-w-0 gap-5 xl:grid-cols-2">
-            <div className="min-w-0 overflow-hidden rounded-[22px] border border-white/[0.06] bg-[#080e1a] p-5">
-              <div className="mb-5 flex items-center gap-3">
-                <BarChart3
-                  size={19}
-                  className="text-blue-400"
-                />
-
-                <h2 className="text-lg font-black text-white">
-                  Team Performance
-                </h2>
-              </div>
-
-              <div className="min-w-0 overflow-hidden">
-                <TeamWinsChart />
+                <div className="min-w-0 overflow-hidden">
+                  <CustomPieChart
+                    data={teamWins}
+                  />
+                </div>
               </div>
             </div>
 
-            <div className="min-w-0 overflow-hidden rounded-[22px] border border-white/[0.06] bg-[#080e1a] p-5">
-              <div className="mb-5 flex items-center gap-3">
-                <BarChart3
-                  size={19}
-                  className="text-emerald-400"
-                />
+            {/* =================================================
+                PLAYER SEARCH
+            ================================================= */}
 
-                <h2 className="text-lg font-black text-white">
-                  Team Distribution
-                </h2>
-              </div>
-
-              <div className="min-w-0 overflow-hidden">
-                <CustomPieChart />
-              </div>
+            <div className="mt-6 min-w-0">
+              <PlayerSearch />
             </div>
-          </div>
-
-          {/* =================================================
-              PLAYER SEARCH
-          ================================================= */}
-
-          <div className="mt-6 min-w-0">
-            <PlayerSearch />
-          </div>
-        </main>
+          </main>
         </div>
       </div>
     </div>
@@ -693,15 +804,23 @@ function Dashboard() {
 
 function extractNumber(data) {
   if (typeof data === "number") {
-    return Number.isFinite(data) ? data : 0;
+    return Number.isFinite(data)
+      ? data
+      : 0;
   }
 
   if (typeof data === "string") {
     const value = Number(data);
-    return Number.isFinite(value) ? value : 0;
+
+    return Number.isFinite(value)
+      ? value
+      : 0;
   }
 
-  if (!data || typeof data !== "object") {
+  if (
+    !data ||
+    typeof data !== "object"
+  ) {
     return 0;
   }
 
@@ -725,7 +844,9 @@ function extractNumber(data) {
       data[key] !== undefined &&
       data[key] !== null
     ) {
-      const value = Number(data[key]);
+      const value = Number(
+        data[key]
+      );
 
       if (Number.isFinite(value)) {
         return value;
@@ -734,6 +855,107 @@ function extractNumber(data) {
   }
 
   return 0;
+}
+
+/* =========================================================
+   TEAM WINS NORMALIZER
+========================================================= */
+
+function normalizeTeamWins(data) {
+  if (!data) {
+    return [];
+  }
+
+  if (
+    typeof data === "object" &&
+    !Array.isArray(data)
+  ) {
+    const source =
+      data.data &&
+      typeof data.data === "object"
+        ? data.data
+        : data;
+
+    return Object.entries(source)
+      .map(([team, value]) => ({
+        team: String(team),
+        Team: String(team),
+        team_name: String(team),
+        name: String(team),
+        wins: Number(value) || 0,
+        Wins: Number(value) || 0,
+        value: Number(value) || 0,
+      }))
+      .filter(
+        (item) => item.team
+      )
+      .sort(
+        (a, b) => b.wins - a.wins
+      )
+      .slice(0, 10);
+  }
+
+  if (Array.isArray(data)) {
+    return data
+      .map((item, index) => {
+        if (
+          !item ||
+          typeof item !== "object"
+        ) {
+          return null;
+        }
+
+        const team =
+          item.team ||
+          item.Team ||
+          item.team_name ||
+          item.TeamName ||
+          item.name ||
+          item.Name ||
+          `Team ${index + 1}`;
+
+        const value =
+          item.wins ??
+          item.Wins ??
+          item.team_wins ??
+          item.TeamWins ??
+          item.total_wins ??
+          item.TotalWins ??
+          item.value ??
+          0;
+
+        const wins = Number(value);
+
+        return {
+          ...item,
+          team: String(team),
+          Team: String(team),
+          team_name: String(team),
+          name: String(team),
+          wins: Number.isFinite(wins)
+            ? wins
+            : 0,
+          Wins: Number.isFinite(wins)
+            ? wins
+            : 0,
+          value: Number.isFinite(wins)
+            ? wins
+            : 0,
+        };
+      })
+      .filter(
+        (item) =>
+          item &&
+          item.team &&
+          item.team !== "undefined"
+      )
+      .sort(
+        (a, b) => b.wins - a.wins
+      )
+      .slice(0, 10);
+  }
+
+  return [];
 }
 
 /* =========================================================
@@ -766,7 +988,9 @@ function normalizeBatsmen(data) {
           item.name !== "undefined" &&
           Number.isFinite(item.value)
       )
-      .sort((a, b) => b.value - a.value)
+      .sort(
+        (a, b) => b.value - a.value
+      )
       .slice(0, 10);
   }
 
@@ -810,7 +1034,9 @@ function normalizeBatsmen(data) {
           item.name &&
           item.name !== "undefined"
       )
-      .sort((a, b) => b.value - a.value)
+      .sort(
+        (a, b) => b.value - a.value
+      )
       .slice(0, 10);
   }
 
@@ -847,7 +1073,9 @@ function normalizeBowlers(data) {
           item.name !== "undefined" &&
           Number.isFinite(item.value)
       )
-      .sort((a, b) => b.value - a.value)
+      .sort(
+        (a, b) => b.value - a.value
+      )
       .slice(0, 10);
   }
 
@@ -890,7 +1118,9 @@ function normalizeBowlers(data) {
           item.name &&
           item.name !== "undefined"
       )
-      .sort((a, b) => b.value - a.value)
+      .sort(
+        (a, b) => b.value - a.value
+      )
       .slice(0, 10);
   }
 
@@ -950,13 +1180,15 @@ function normalizeCap(data) {
         ? data.data
         : data;
 
-    const entries = Object.entries(source);
+    const entries =
+      Object.entries(source);
 
     if (!entries.length) {
       return null;
     }
 
-    const [name, value] = entries[0];
+    const [name, value] =
+      entries[0];
 
     return {
       name: String(name),
@@ -972,7 +1204,8 @@ function normalizeCap(data) {
 ========================================================= */
 
 function getInitials(name) {
-  const value = String(name || "").trim();
+  const value =
+    String(name || "").trim();
 
   if (!value) {
     return "PL";
@@ -1012,7 +1245,10 @@ function EmptyState({ text }) {
   );
 }
 
-/* Compatibility alias */
+/* =========================================================
+   COMPATIBILITY
+========================================================= */
+
 function EmptyData({ text }) {
   return <EmptyState text={text} />;
 }
