@@ -12,14 +12,12 @@ import {
   ChevronRight,
 } from "lucide-react";
 
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 
 function Sidebar({
   isOpen = false,
   onClose = () => {},
 }) {
-  const navigate = useNavigate();
-
   const menuItems = [
     {
       name: "Dashboard",
@@ -66,16 +64,30 @@ function Sidebar({
   }
 
   function handleLogout() {
+    /* =========================================
+       CLEAR ALL AUTH STATE
+    ========================================= */
+
     localStorage.removeItem("token");
     localStorage.removeItem("access_token");
+    localStorage.removeItem("iplLoggedIn");
+    localStorage.removeItem("iplUsername");
+    localStorage.removeItem("iplRememberMe");
+
+    /* =========================================
+       CLOSE MOBILE SIDEBAR
+    ========================================= */
 
     onClose();
 
-    navigate("/login", {
-      replace: true,
-    });
+    /* =========================================
+       GO BACK TO ROOT
 
-    window.location.reload();
+       App.jsx will automatically render
+       Login because iplLoggedIn is removed.
+    ========================================= */
+
+    window.location.href = "/";
   }
 
   return (
@@ -125,26 +137,20 @@ function Sidebar({
           }
         `}
       >
-
         {/* =================================================
             LOGO HEADER
         ================================================== */}
 
         <div className="flex min-h-[82px] shrink-0 items-center justify-between border-b border-white/[0.06] px-4 sm:px-5">
-
           <div className="flex min-w-0 items-center gap-3">
-
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-orange-400/20 bg-gradient-to-br from-orange-500/15 to-orange-500/[0.03] shadow-[0_0_24px_rgba(249,115,22,0.08)] sm:h-11 sm:w-11">
-
               <Trophy
                 size={20}
                 className="text-orange-400"
               />
-
             </div>
 
             <div className="min-w-0">
-
               <h1 className="truncate text-sm font-black tracking-tight text-white">
                 IPL Analytics
               </h1>
@@ -152,9 +158,7 @@ function Sidebar({
               <p className="mt-0.5 truncate text-[7px] font-black uppercase tracking-[1.8px] text-slate-600">
                 Cricket Intelligence
               </p>
-
             </div>
-
           </div>
 
           {/* MOBILE CLOSE */}
@@ -167,7 +171,6 @@ function Sidebar({
           >
             <X size={17} />
           </button>
-
         </div>
 
         {/* =================================================
@@ -175,17 +178,14 @@ function Sidebar({
         ================================================== */}
 
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-4 sm:py-5">
-
           {/* MAIN MENU */}
 
           <div>
-
             <p className="mb-3 px-3 text-[8px] font-black uppercase tracking-[2.5px] text-slate-700">
               Main Menu
             </p>
 
             <div className="space-y-1">
-
               {menuItems.map((item) => {
                 const Icon = item.icon;
 
@@ -254,21 +254,17 @@ function Sidebar({
                   </NavLink>
                 );
               })}
-
             </div>
-
           </div>
 
           {/* SYSTEM */}
 
           <div className="mt-7 border-t border-white/[0.05] pt-5">
-
             <p className="mb-3 px-3 text-[8px] font-black uppercase tracking-[2.5px] text-slate-700">
               System
             </p>
 
             <div className="space-y-1">
-
               {systemItems.map((item) => {
                 const Icon = item.icon;
 
@@ -331,7 +327,9 @@ function Sidebar({
                 );
               })}
 
-              {/* LOGOUT */}
+              {/* =================================================
+                  LOGOUT
+              ================================================== */}
 
               <button
                 type="button"
@@ -366,11 +364,8 @@ function Sidebar({
                   className="shrink-0 text-slate-800 transition group-hover:translate-x-0.5 group-hover:text-red-400"
                 />
               </button>
-
             </div>
-
           </div>
-
         </div>
 
         {/* =================================================
@@ -378,30 +373,24 @@ function Sidebar({
         ================================================== */}
 
         <div className="shrink-0 border-t border-white/[0.06] bg-[#050914] p-3">
-
           <div className="rounded-xl border border-emerald-400/10 bg-emerald-500/[0.04] p-3">
-
             <div className="flex items-center gap-2">
-
               <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
 
               <span className="text-[8px] font-black uppercase tracking-[1.5px] text-emerald-400">
                 API Online
               </span>
-
             </div>
 
             <p className="mt-1 truncate text-[8px] text-slate-700">
               IPL Analytics System
             </p>
-
           </div>
-
         </div>
-
       </aside>
     </>
   );
 }
 
 export default Sidebar;
+
