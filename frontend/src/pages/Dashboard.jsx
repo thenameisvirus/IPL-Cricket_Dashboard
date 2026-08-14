@@ -25,11 +25,9 @@ import {
 
 import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
-import DashboardCard from "../components/DashboardCard";
 import TeamWinsChart from "../components/TeamWinsChart";
 import CustomPieChart from "../components/PieChart";
 import PlayerSearch from "../components/PlayerSearch";
-
 import BASE_URL from "../services/api";
 
 function Dashboard() {
@@ -132,7 +130,7 @@ function Dashboard() {
   }, [topBowlers]);
 
   return (
-    <div className="min-h-screen bg-[#050914] text-white">
+    <div className="min-h-screen w-full overflow-x-hidden bg-[#050914] text-white">
       {/* =====================================================
           SIDEBAR
       ===================================================== */}
@@ -146,7 +144,7 @@ function Dashboard() {
           MAIN AREA
       ===================================================== */}
 
-      <div className="min-h-screen lg:ml-[250px]">
+      <div className="min-h-screen min-w-0 w-full lg:ml-[250px] lg:w-[calc(100vw-250px)]">
         {/* =====================================================
             NAVBAR
         ===================================================== */}
@@ -159,12 +157,12 @@ function Dashboard() {
             CONTENT
         ===================================================== */}
 
-        <main className="w-full min-w-0 overflow-x-hidden px-4 py-6 sm:px-6 lg:px-8">
+        <main className="mx-auto w-full min-w-0 max-w-[1800px] overflow-x-hidden px-4 py-6 sm:px-6 lg:px-8 xl:px-10">
           {/* =================================================
               HEADER
           ================================================= */}
 
-          <div className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div className="mb-7 flex min-w-0 flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div className="min-w-0">
               <div className="mb-2 flex items-center gap-2">
                 <span className="h-2 w-2 shrink-0 rounded-full bg-orange-500" />
@@ -174,11 +172,11 @@ function Dashboard() {
                 </span>
               </div>
 
-              <h1 className="text-3xl font-black tracking-tight text-white sm:text-4xl">
+              <h1 className="truncate text-3xl font-black tracking-tight text-white sm:text-4xl">
                 Cricket Dashboard
               </h1>
 
-              <p className="mt-2 max-w-xl text-xs leading-5 text-slate-500">
+              <p className="mt-2 max-w-xl text-xs leading-5 text-slate-500 sm:text-sm">
                 Explore IPL matches, teams, players, batting and bowling
                 performance from your dataset.
               </p>
@@ -188,13 +186,12 @@ function Dashboard() {
               type="button"
               onClick={loadDashboard}
               disabled={loading}
-              className="flex w-fit shrink-0 items-center gap-2 rounded-xl border border-white/[0.07] bg-white/[0.025] px-4 py-3 text-[9px] font-black uppercase tracking-wider text-slate-400 transition hover:border-orange-400/20 hover:text-orange-400 disabled:opacity-50"
+              className="flex w-fit shrink-0 items-center gap-2 rounded-xl border border-white/[0.07] bg-white/[0.025] px-4 py-3 text-[9px] font-black uppercase tracking-wider text-slate-400 transition hover:border-orange-400/20 hover:text-orange-400 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <RefreshCw
                 size={14}
                 className={loading ? "animate-spin" : ""}
               />
-
               Refresh
             </button>
           </div>
@@ -204,7 +201,7 @@ function Dashboard() {
           ================================================= */}
 
           {error && (
-            <div className="mb-6 flex items-start gap-3 rounded-2xl border border-red-400/10 bg-red-500/[0.05] p-4">
+            <div className="mb-6 flex min-w-0 items-start gap-3 rounded-2xl border border-red-400/10 bg-red-500/[0.05] p-4">
               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-red-500/10 text-red-400">
                 <AlertCircle size={17} />
               </div>
@@ -214,7 +211,7 @@ function Dashboard() {
                   Dashboard Data Notice
                 </p>
 
-                <p className="mt-1 text-[10px] text-red-400/70">
+                <p className="mt-1 break-words text-[10px] text-red-400/70">
                   {error}
                 </p>
               </div>
@@ -225,29 +222,29 @@ function Dashboard() {
               STAT CARDS
           ================================================= */}
 
-          <div className="grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-5">
-            <DashboardCard
+          <div className="grid w-full min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+            <MetricCard
               title="Total Matches"
               value={loading ? "..." : String(matches)}
               icon={Trophy}
               color="orange"
             />
 
-            <DashboardCard
+            <MetricCard
               title="Total Teams"
               value={loading ? "..." : String(teams)}
               icon={ShieldCheck}
               color="blue"
             />
 
-            <DashboardCard
+            <MetricCard
               title="Total Players"
               value={loading ? "..." : String(players)}
               icon={Users}
               color="purple"
             />
 
-            <DashboardCard
+            <MetricCard
               title="Orange Cap"
               value={
                 loading
@@ -256,9 +253,10 @@ function Dashboard() {
               }
               icon={Target}
               color="orange"
+              compact
             />
 
-            <DashboardCard
+            <MetricCard
               title="Purple Cap"
               value={
                 loading
@@ -267,6 +265,7 @@ function Dashboard() {
               }
               icon={Flame}
               color="purple"
+              compact
             />
           </div>
 
@@ -274,11 +273,11 @@ function Dashboard() {
               CAP CARDS
           ================================================= */}
 
-          <div className="mt-6 grid min-w-0 gap-4 lg:grid-cols-2">
+          <div className="mt-6 grid w-full min-w-0 gap-4 lg:grid-cols-2">
             {/* ORANGE CAP */}
 
             <div className="min-w-0 overflow-hidden rounded-[22px] border border-orange-400/10 bg-gradient-to-br from-orange-500/[0.07] to-[#0a101d] p-5">
-              <div className="flex items-start justify-between gap-4">
+              <div className="flex min-w-0 items-start justify-between gap-4">
                 <div className="min-w-0">
                   <p className="text-[8px] font-black uppercase tracking-[2px] text-orange-400">
                     Orange Cap
@@ -311,7 +310,7 @@ function Dashboard() {
             {/* PURPLE CAP */}
 
             <div className="min-w-0 overflow-hidden rounded-[22px] border border-purple-400/10 bg-gradient-to-br from-purple-500/[0.07] to-[#0a101d] p-5">
-              <div className="flex items-start justify-between gap-4">
+              <div className="flex min-w-0 items-start justify-between gap-4">
                 <div className="min-w-0">
                   <p className="text-[8px] font-black uppercase tracking-[2px] text-purple-400">
                     Purple Cap
@@ -346,17 +345,17 @@ function Dashboard() {
               BATTING + BOWLING
           ================================================= */}
 
-          <div className="mt-6 grid min-w-0 gap-5 xl:grid-cols-2">
+          <div className="mt-6 grid w-full min-w-0 gap-5 xl:grid-cols-2">
             {/* TOP BATSMEN */}
 
             <div className="min-w-0 overflow-hidden rounded-[22px] border border-white/[0.06] bg-[#080e1a] p-5">
-              <div className="mb-5 flex items-center justify-between gap-3">
+              <div className="mb-5 flex min-w-0 items-center justify-between gap-3">
                 <div className="min-w-0">
                   <p className="text-[8px] font-black uppercase tracking-[2px] text-orange-400">
                     Batting
                   </p>
 
-                  <h2 className="mt-1 text-lg font-black text-white">
+                  <h2 className="truncate text-lg font-black text-white">
                     Top 10 Batsmen
                   </h2>
                 </div>
@@ -451,13 +450,13 @@ function Dashboard() {
             {/* TOP BOWLERS */}
 
             <div className="min-w-0 overflow-hidden rounded-[22px] border border-white/[0.06] bg-[#080e1a] p-5">
-              <div className="mb-5 flex items-center justify-between gap-3">
+              <div className="mb-5 flex min-w-0 items-center justify-between gap-3">
                 <div className="min-w-0">
                   <p className="text-[8px] font-black uppercase tracking-[2px] text-purple-400">
                     Bowling
                   </p>
 
-                  <h2 className="mt-1 text-lg font-black text-white">
+                  <h2 className="truncate text-lg font-black text-white">
                     Top 10 Bowlers
                   </h2>
                 </div>
@@ -556,7 +555,7 @@ function Dashboard() {
 
           <div className="mt-6 min-w-0 overflow-hidden rounded-[22px] border border-white/[0.06] bg-[#080e1a] p-5">
             <div className="mb-5 flex items-center justify-between gap-3">
-              <div>
+              <div className="min-w-0">
                 <p className="text-[8px] font-black uppercase tracking-[2px] text-orange-400">
                   Leaderboard
                 </p>
@@ -573,7 +572,7 @@ function Dashboard() {
             </div>
 
             {topBatsmen.length > 0 ? (
-              <div className="overflow-x-auto">
+              <div className="w-full overflow-x-auto">
                 <table className="w-full min-w-[520px] border-collapse">
                   <thead>
                     <tr className="border-b border-white/[0.06]">
@@ -598,10 +597,7 @@ function Dashboard() {
                         className="border-b border-white/[0.04] transition hover:bg-white/[0.02]"
                       >
                         <td className="px-4 py-4 text-xs font-black text-slate-600">
-                          {String(index + 1).padStart(
-                            2,
-                            "0"
-                          )}
+                          {String(index + 1).padStart(2, "0")}
                         </td>
 
                         <td className="px-4 py-4">
@@ -617,9 +613,7 @@ function Dashboard() {
                         </td>
 
                         <td className="px-4 py-4 text-right text-sm font-black text-orange-300">
-                          {Number(
-                            item.value || 0
-                          ).toLocaleString()}
+                          {Number(item.value || 0).toLocaleString()}
                         </td>
                       </tr>
                     ))}
@@ -635,7 +629,7 @@ function Dashboard() {
               TEAM CHARTS
           ================================================= */}
 
-          <div className="mt-6 grid min-w-0 gap-5 xl:grid-cols-2">
+          <div className="mt-6 grid w-full min-w-0 gap-5 xl:grid-cols-2">
             <div className="min-w-0 overflow-hidden rounded-[22px] border border-white/[0.06] bg-[#080e1a] p-5">
               <div className="mb-5 flex items-center gap-3">
                 <BarChart3
@@ -648,7 +642,7 @@ function Dashboard() {
                 </h2>
               </div>
 
-              <div className="min-w-0 overflow-hidden">
+              <div className="min-w-0 max-w-full overflow-hidden">
                 <TeamWinsChart />
               </div>
             </div>
@@ -665,7 +659,7 @@ function Dashboard() {
                 </h2>
               </div>
 
-              <div className="min-w-0 overflow-hidden">
+              <div className="min-w-0 max-w-full overflow-hidden">
                 <CustomPieChart />
               </div>
             </div>
@@ -675,10 +669,87 @@ function Dashboard() {
               PLAYER SEARCH
           ================================================= */}
 
-          <div className="mt-6 min-w-0">
+          <div className="mt-6 min-w-0 max-w-full">
             <PlayerSearch />
           </div>
         </main>
+      </div>
+    </div>
+  );
+}
+
+/* =========================================================
+   METRIC CARD
+========================================================= */
+
+function MetricCard({
+  title,
+  value,
+  icon: Icon,
+  color = "orange",
+  compact = false,
+}) {
+  const styles = {
+    orange: {
+      icon: "border-orange-400/10 bg-orange-500/10 text-orange-400",
+      glow: "bg-orange-500/[0.05]",
+      bar: "from-orange-700 to-orange-300",
+    },
+
+    blue: {
+      icon: "border-blue-400/10 bg-blue-500/10 text-blue-400",
+      glow: "bg-blue-500/[0.05]",
+      bar: "from-blue-700 to-blue-300",
+    },
+
+    purple: {
+      icon: "border-purple-400/10 bg-purple-500/10 text-purple-400",
+      glow: "bg-purple-500/[0.05]",
+      bar: "from-purple-700 to-purple-300",
+    },
+  };
+
+  const style = styles[color] || styles.orange;
+
+  return (
+    <div className="group relative min-w-0 w-full overflow-hidden rounded-[22px] border border-white/[0.07] bg-white/[0.035] p-5 backdrop-blur-xl transition duration-300 hover:-translate-y-1 hover:border-white/[0.12]">
+      <div
+        className={`pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full blur-3xl ${style.glow}`}
+      />
+
+      <div className="relative min-w-0">
+        <div className="flex items-start justify-between gap-3">
+          <div
+            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border ${style.icon}`}
+          >
+            <Icon size={20} />
+          </div>
+
+          <span className="shrink-0 text-[8px] font-black uppercase tracking-wider text-slate-600">
+            Live Data
+          </span>
+        </div>
+
+        <p className="mt-5 truncate text-[9px] font-black uppercase tracking-[1.8px] text-slate-600">
+          {title}
+        </p>
+
+        <h3
+          className={`mt-2 min-w-0 truncate font-black tracking-tight text-white ${
+            compact
+              ? "text-xl sm:text-2xl"
+              : "text-3xl"
+          }`}
+          title={String(value)}
+        >
+          {value}
+        </h3>
+
+        <div className="mt-5 h-1 overflow-hidden rounded-full bg-white/[0.05]">
+          <div
+            className={`h-full w-[72%] rounded-full bg-gradient-to-r ${style.bar} opacity-60`}
+          />
+        </div>
       </div>
     </div>
   );
@@ -990,7 +1061,7 @@ function getInitials(name) {
 
 function EmptyState({ text }) {
   return (
-    <div className="flex min-h-[260px] flex-col items-center justify-center rounded-2xl border border-white/[0.04] bg-white/[0.015] text-center">
+    <div className="flex min-h-[260px] w-full flex-col items-center justify-center rounded-2xl border border-white/[0.04] bg-white/[0.015] px-4 text-center">
       <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/[0.03]">
         <AlertCircle
           size={20}
