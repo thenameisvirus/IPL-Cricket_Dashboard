@@ -17,76 +17,49 @@ import {
 
 const players = [
   {
-    name: "Virat Kohli",
-    role: "BATSMAN",
-    image:
-      "https://documents.iplt20.com/ipl/IPLHeadshot2025/2.png",
+    name: "Virat Kohli", role: "BATSMAN", image: "https://documents.iplt20.com/ipl/IPLHeadshot2026/2.png",
   },
   {
-    name: "MS Dhoni",
-    role: "LEGEND",
-    image:
-      "https://documents.iplt20.com/ipl/IPLHeadshot2025/57.png",
+    name: "MS Dhoni", role: "LEGEND", image: "https://documents.iplt20.com/ipl/IPLHeadshot2026/57.png",
   },
   {
-    name: "Rohit Sharma",
-    role: "CAPTAIN",
-    image:
-      "https://documents.iplt20.com/ipl/IPLHeadshot2025/6.png",
+    name: "Rohit Sharma", role: "CAPTAIN", image: "https://documents.iplt20.com/ipl/IPLHeadshot2026/6.png",
   },
   {
-    name: "Hardik Pandya",
-    role: "ALL ROUNDER",
-    image:
-      "https://documents.iplt20.com/ipl/IPLHeadshot2025/54.png",
+    name: "Hardik Pandya", role: "ALL ROUNDER", image: "https://documents.iplt20.com/ipl/IPLHeadshot2026/54.png",
   },
   {
-    name: "Jasprit Bumrah",
-    role: "BOWLER",
-    image:
-      "https://documents.iplt20.com/ipl/IPLHeadshot2025/9.png",
+    name: "Jasprit Bumrah", role: "BOWLER", image: "https://documents.iplt20.com/ipl/IPLHeadshot2026/9.png",
   },
   {
-    name: "Ravindra Jadeja",
-    role: "ALL ROUNDER",
-    image:
-      "https://documents.iplt20.com/ipl/IPLHeadshot2025/46.png",
+    name: "Ravindra Jadeja", role: "ALL ROUNDER", image: "https://documents.iplt20.com/ipl/IPLHeadshot2026/46.png",
   },
   {
-    name: "Rishabh Pant",
-    role: "WICKET KEEPER",
-    image:
-      "https://documents.iplt20.com/ipl/IPLHeadshot2025/18.png",
+    name: "Rishabh Pant", role: "WICKET KEEPER", image: "https://documents.iplt20.com/ipl/IPLHeadshot2026/18.png",
   },
   {
-    name: "KL Rahul",
-    role: "BATSMAN",
-    image:
-      "https://documents.iplt20.com/ipl/IPLHeadshot2025/19.png",
+    name: "KL Rahul", role: "BATSMAN", image: "https://documents.iplt20.com/ipl/IPLHeadshot2026/19.png",
   },
   {
-    name: "Suryakumar Yadav",
-    role: "BATSMAN",
-    image:
-      "https://documents.iplt20.com/ipl/IPLHeadshot2025/174.png",
+    name: "Suryakumar Yadav", role: "BATSMAN", image: "https://documents.iplt20.com/ipl/IPLHeadshot2026/174.png",
   },
   {
-    name: "Shubman Gill",
-    role: "BATSMAN",
-    image:
-      "https://documents.iplt20.com/ipl/IPLHeadshot2025/62.png",
+    name: "Shubman Gill", role: "BATSMAN", image: "https://documents.iplt20.com/ipl/IPLHeadshot2026/62.png",
   },
   {
-    name: "Mohammed Siraj",
-    role: "BOWLER",
-    image:
-      "https://documents.iplt20.com/ipl/IPLHeadshot2025/3840.png",
+    name: "Mohammed Siraj", role: "BOWLER", image: "https://documents.iplt20.com/ipl/IPLHeadshot2026/3840.png",
   },
   {
-    name: "Sanju Samson",
-    role: "WICKET KEEPER",
-    image:
-      "https://documents.iplt20.com/ipl/IPLHeadshot2025/190.png",
+    name: "Sanju Samson", role: "WICKET KEEPER", image: "https://documents.iplt20.com/ipl/IPLHeadshot2026/190.png",
+  },
+  {
+    name: "IPL Star 13", role: "IPL PLAYER", image: "https://documents.iplt20.com/ipl/IPLHeadshot2026/102.png",
+  },
+  {
+    name: "IPL Star 14", role: "IPL PLAYER", image: "https://documents.iplt20.com/ipl/IPLHeadshot2026/114.png",
+  },
+  {
+    name: "IPL Star 15", role: "IPL PLAYER", image: "https://documents.iplt20.com/ipl/IPLHeadshot2026/148.png",
   },
 ];
 
