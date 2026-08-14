@@ -1,6 +1,3 @@
-import { useEffect, useState } from "react";
-import axios from "axios";
-
 import {
   ResponsiveContainer,
   BarChart,
@@ -11,141 +8,45 @@ import {
   Tooltip,
 } from "recharts";
 
-import BASE_URL from "../services/api";
-
 function TeamWinsChart({ data = [] }) {
-  const [apiData, setApiData] = useState([]);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (Array.isArray(data) && data.length > 0) {
-      setApiData(normalizeData(data));
-      return;
-    }
-
-    loadData();
-  }, [data]);
-
-  async function loadData() {
-    try {
-      setLoading(true);
-
-      const response = await axios.get(
-        `${BASE_URL}/team_wins_chart`
-      );
-
-      const raw =
-        response?.data?.data ??
-        response?.data?.teams ??
-        response?.data ??
-        [];
-
-      setApiData(normalizeData(raw));
-    } catch (error) {
-      console.error(
-        "Team Wins Chart Error:",
-        error
-      );
-
-      setApiData([]);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  function normalizeData(raw) {
-    if (!raw) {
-      return [];
-    }
-
-    if (
-      typeof raw === "object" &&
-      !Array.isArray(raw)
-    ) {
-      return Object.entries(raw)
-        .map(([team, value]) => ({
-          team: String(team),
-          wins: Number(value) || 0,
+  const chartData = Array.isArray(data)
+    ? data
+        .map((item) => ({
+          team:
+            item?.team ||
+            item?.Team ||
+            item?.team_name ||
+            item?.TeamName ||
+            item?.name ||
+            "Unknown",
+          wins:
+            Number(
+              item?.wins ??
+                item?.Wins ??
+                item?.team_wins ??
+                item?.TeamWins ??
+                item?.total_wins ??
+                item?.TotalWins ??
+                item?.value ??
+                0
+            ) || 0,
         }))
-        .filter(
-          (item) =>
-            item.team &&
-            item.team !== "undefined"
-        )
+        .filter((item) => item.team)
         .sort((a, b) => b.wins - a.wins)
-        .slice(0, 10);
-    }
+    : [];
 
-    if (Array.isArray(raw)) {
-      return raw
-        .map((item, index) => {
-          if (
-            !item ||
-            typeof item !== "object"
-          ) {
-            return null;
-          }
-
-          const team =
-            item.team ||
-            item.Team ||
-            item.team_name ||
-            item.TeamName ||
-            item.name ||
-            item.Name ||
-            `Team ${index + 1}`;
-
-          const wins =
-            item.wins ??
-            item.Wins ??
-            item.team_wins ??
-            item.TeamWins ??
-            item.total_wins ??
-            item.TotalWins ??
-            item.value ??
-            0;
-
-          return {
-            team: String(team),
-            wins: Number(wins) || 0,
-          };
-        })
-        .filter(Boolean)
-        .sort((a, b) => b.wins - a.wins)
-        .slice(0, 10);
-    }
-
-    return [];
-  }
-
-  if (loading) {
+  if (chartData.length === 0) {
     return (
-      <div className="flex min-h-[320px] items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-white/10 border-t-blue-400" />
+      <div className="flex min-h-[320px] items-center justify-center text-center">
+        <div>
+          <div className="mb-3 text-5xl">🏆</div>
 
-          <p className="mt-4 text-xs font-bold text-slate-500">
-            Loading team performance...
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!apiData.length) {
-    return (
-      <div className="flex min-h-[320px] items-center justify-center">
-        <div className="text-center">
-          <div className="mb-4 text-5xl">
-            🏆
-          </div>
-
-          <h3 className="text-xl font-black text-slate-300">
-            No team wins data available
+          <h3 className="text-lg font-black text-slate-300">
+            No team performance data
           </h3>
 
-          <p className="mt-2 text-sm text-slate-600">
-            Backend did not return team performance statistics.
+          <p className="mt-2 text-xs text-slate-600">
+            No team win records were returned.
           </p>
         </div>
       </div>
@@ -159,12 +60,12 @@ function TeamWinsChart({ data = [] }) {
         height="100%"
       >
         <BarChart
-          data={apiData}
+          data={chartData}
           margin={{
             top: 15,
-            right: 20,
+            right: 15,
             left: 0,
-            bottom: 75,
+            bottom: 80,
           }}
         >
           <CartesianGrid
@@ -175,13 +76,13 @@ function TeamWinsChart({ data = [] }) {
 
           <XAxis
             dataKey="team"
+            interval={0}
             angle={-35}
             textAnchor="end"
-            interval={0}
             height={90}
             tick={{
+              fill: "#64748b",
               fontSize: 10,
-              fill: "#94a3b8",
               fontWeight: 700,
             }}
             axisLine={false}
@@ -191,9 +92,8 @@ function TeamWinsChart({ data = [] }) {
           <YAxis
             allowDecimals={false}
             tick={{
-              fontSize: 11,
               fill: "#64748b",
-              fontWeight: 700,
+              fontSize: 10,
             }}
             axisLine={false}
             tickLine={false}
@@ -201,8 +101,12 @@ function TeamWinsChart({ data = [] }) {
 
           <Tooltip
             cursor={{
-              fill: "rgba(255,255,255,0.04)",
+              fill: "rgba(255,255,255,0.03)",
             }}
+            formatter={(value) => [
+              `${Number(value).toLocaleString()} Wins`,
+              "Wins",
+            ]}
             contentStyle={{
               background: "#0b1220",
               border:
@@ -210,10 +114,6 @@ function TeamWinsChart({ data = [] }) {
               borderRadius: "12px",
               color: "#fff",
             }}
-            formatter={(value) => [
-              `${Number(value).toLocaleString()} Wins`,
-              "Wins",
-            ]}
           />
 
           <Bar
