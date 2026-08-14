@@ -1,3 +1,6 @@
+import { useEffect, useState } from "react";
+import axios from "axios";
+
 import {
   ResponsiveContainer,
   BarChart,
@@ -8,95 +11,128 @@ import {
   Tooltip,
 } from "recharts";
 
+import BASE_URL from "../services/api";
+
 function TeamWinsChart({ data = [] }) {
-  let formattedData = [];
+  const [apiData, setApiData] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  // =========================================================
-  // OBJECT RESPONSE
-  //
-  // Example:
-  // {
-  //   "MI": 140,
-  //   "CSK": 138,
-  //   "KKR": 119
-  // }
-  // =========================================================
+  useEffect(() => {
+    if (Array.isArray(data) && data.length > 0) {
+      setApiData(normalizeData(data));
+      return;
+    }
 
-  if (
-    data &&
-    typeof data === "object" &&
-    !Array.isArray(data)
-  ) {
-    formattedData = Object.entries(data)
-      .map(([team, value]) => {
-        const wins = Number(value);
+    loadData();
+  }, [data]);
 
-        return {
+  async function loadData() {
+    try {
+      setLoading(true);
+
+      const response = await axios.get(
+        `${BASE_URL}/team_wins_chart`
+      );
+
+      const raw =
+        response?.data?.data ??
+        response?.data?.teams ??
+        response?.data ??
+        [];
+
+      setApiData(normalizeData(raw));
+    } catch (error) {
+      console.error(
+        "Team Wins Chart Error:",
+        error
+      );
+
+      setApiData([]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function normalizeData(raw) {
+    if (!raw) {
+      return [];
+    }
+
+    if (
+      typeof raw === "object" &&
+      !Array.isArray(raw)
+    ) {
+      return Object.entries(raw)
+        .map(([team, value]) => ({
           team: String(team),
-          wins: Number.isFinite(wins) ? wins : 0,
-        };
-      })
-      .filter((item) => item.team && item.wins >= 0)
-      .sort((a, b) => b.wins - a.wins);
+          wins: Number(value) || 0,
+        }))
+        .filter(
+          (item) =>
+            item.team &&
+            item.team !== "undefined"
+        )
+        .sort((a, b) => b.wins - a.wins)
+        .slice(0, 10);
+    }
+
+    if (Array.isArray(raw)) {
+      return raw
+        .map((item, index) => {
+          if (
+            !item ||
+            typeof item !== "object"
+          ) {
+            return null;
+          }
+
+          const team =
+            item.team ||
+            item.Team ||
+            item.team_name ||
+            item.TeamName ||
+            item.name ||
+            item.Name ||
+            `Team ${index + 1}`;
+
+          const wins =
+            item.wins ??
+            item.Wins ??
+            item.team_wins ??
+            item.TeamWins ??
+            item.total_wins ??
+            item.TotalWins ??
+            item.value ??
+            0;
+
+          return {
+            team: String(team),
+            wins: Number(wins) || 0,
+          };
+        })
+        .filter(Boolean)
+        .sort((a, b) => b.wins - a.wins)
+        .slice(0, 10);
+    }
+
+    return [];
   }
 
-  // =========================================================
-  // ARRAY RESPONSE
-  // =========================================================
+  if (loading) {
+    return (
+      <div className="flex min-h-[320px] items-center justify-center">
+        <div className="text-center">
+          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-white/10 border-t-blue-400" />
 
-  if (Array.isArray(data)) {
-    formattedData = data
-      .map((item, index) => {
-        if (!item || typeof item !== "object") {
-          return null;
-        }
-
-        const teamName =
-          item.team ||
-          item.Team ||
-          item.team_name ||
-          item.TeamName ||
-          item.name ||
-          item.Name ||
-          `Team ${index + 1}`;
-
-        const winsValue =
-          item.wins ??
-          item.Wins ??
-          item.team_wins ??
-          item.TeamWins ??
-          item.total_wins ??
-          item.TotalWins ??
-          item.value ??
-          0;
-
-        const wins = Number(winsValue);
-
-        return {
-          team: String(teamName),
-          wins: Number.isFinite(wins) ? wins : 0,
-        };
-      })
-      .filter(
-        (item) =>
-          item &&
-          item.team &&
-          item.team !== "undefined"
-      )
-      .sort((a, b) => b.wins - a.wins);
+          <p className="mt-4 text-xs font-bold text-slate-500">
+            Loading team performance...
+          </p>
+        </div>
+      </div>
+    );
   }
 
-  // =========================================================
-  // TOP 10
-  // =========================================================
-
-  formattedData = formattedData.slice(0, 10);
-
-  // =========================================================
-  // EMPTY
-  // =========================================================
-
-  if (!formattedData.length) {
+  if (!apiData.length) {
     return (
       <div className="flex min-h-[320px] items-center justify-center">
         <div className="text-center">
@@ -116,10 +152,6 @@ function TeamWinsChart({ data = [] }) {
     );
   }
 
-  // =========================================================
-  // CHART
-  // =========================================================
-
   return (
     <div className="h-[350px] w-full min-w-0">
       <ResponsiveContainer
@@ -127,7 +159,7 @@ function TeamWinsChart({ data = [] }) {
         height="100%"
       >
         <BarChart
-          data={formattedData}
+          data={apiData}
           margin={{
             top: 15,
             right: 20,
@@ -152,9 +184,7 @@ function TeamWinsChart({ data = [] }) {
               fill: "#94a3b8",
               fontWeight: 700,
             }}
-            axisLine={{
-              stroke: "rgba(255,255,255,0.08)",
-            }}
+            axisLine={false}
             tickLine={false}
           />
 
@@ -175,13 +205,10 @@ function TeamWinsChart({ data = [] }) {
             }}
             contentStyle={{
               background: "#0b1220",
-              border: "1px solid rgba(255,255,255,0.08)",
+              border:
+                "1px solid rgba(255,255,255,0.08)",
               borderRadius: "12px",
               color: "#fff",
-            }}
-            labelStyle={{
-              color: "#f8fafc",
-              fontWeight: 800,
             }}
             formatter={(value) => [
               `${Number(value).toLocaleString()} Wins`,
