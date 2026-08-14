@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 
 import {
@@ -15,62 +15,110 @@ import {
   Users,
   Zap,
   TrendingUp,
-  CircleDot,
 } from "lucide-react";
+
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
+} from "recharts";
 
 import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
-import TeamWinsChart from "../components/TeamWinsChart";
-import CustomBarChart from "../components/BarChart";
-import CustomPieChart from "../components/PieChart";
 import BASE_URL from "../services/api";
+
+const CURRENT_TEAMS = [
+  "Mumbai Indians",
+  "Chennai Super Kings",
+  "Royal Challengers Bengaluru",
+  "Kolkata Knight Riders",
+  "Sunrisers Hyderabad",
+  "Punjab Kings",
+  "Delhi Capitals",
+  "Rajasthan Royals",
+  "Gujarat Titans",
+  "Lucknow Super Giants",
+];
+
+const FALLBACK_WINS = [
+  { team: "Mumbai Indians", wins: 155 },
+  { team: "Chennai Super Kings", wins: 148 },
+  {
+    team: "Royal Challengers Bengaluru",
+    wins: 143,
+  },
+  { team: "Kolkata Knight Riders", wins: 140 },
+  { team: "Sunrisers Hyderabad", wins: 131 },
+  { team: "Punjab Kings", wins: 126 },
+  { team: "Delhi Capitals", wins: 125 },
+  { team: "Rajasthan Royals", wins: 123 },
+  { team: "Gujarat Titans", wins: 60 },
+  { team: "Lucknow Super Giants", wins: 34 },
+];
+
+const COLORS = [
+  "#f97316",
+  "#a855f7",
+  "#3b82f6",
+  "#06b6d4",
+  "#10b981",
+  "#ec4899",
+  "#eab308",
+  "#ef4444",
+  "#8b5cf6",
+  "#14b8a6",
+];
 
 function Analytics() {
   const [matches, setMatches] = useState(0);
-  const [teams, setTeams] = useState(0);
+  const [teams, setTeams] = useState(10);
   const [players, setPlayers] = useState(0);
 
   const [orangeCap, setOrangeCap] = useState("—");
   const [purpleCap, setPurpleCap] = useState("—");
 
-  const [teamWins, setTeamWins] = useState([]);
-  const [topBatsmen, setTopBatsmen] = useState([]);
+  const [teamWins, setTeamWins] = useState(
+    FALLBACK_WINS
+  );
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [apiError, setApiError] = useState(false);
 
   useEffect(() => {
-    window.scrollTo({
-      top: 0,
-      left: 0,
-      behavior: "smooth",
-    });
-
     loadAnalytics();
   }, []);
 
-  function safeNumber(value) {
-    if (
-      value === null ||
-      value === undefined ||
-      typeof value === "object"
-    ) {
-      return 0;
+  async function getData(url, fallback) {
+    try {
+      const response = await axios.get(url);
+      return response?.data ?? fallback;
+    } catch (error) {
+      console.error("API ERROR:", url, error);
+      return fallback;
     }
-
-    const number = Number(value);
-
-    return Number.isFinite(number) ? number : 0;
   }
 
-  function extractNumber(data, keys = []) {
+  function numberValue(value) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+
+  function extractNumber(data, keys) {
     if (typeof data === "number") {
-      return safeNumber(data);
+      return numberValue(data);
     }
 
     if (typeof data === "string") {
-      return safeNumber(data);
+      return numberValue(data);
     }
 
     if (!data || typeof data !== "object") {
@@ -80,12 +128,11 @@ function Analytics() {
     for (const key of keys) {
       if (
         data[key] !== undefined &&
-        data[key] !== null &&
-        typeof data[key] !== "object"
+        data[key] !== null
       ) {
-        const value = safeNumber(data[key]);
+        const value = numberValue(data[key]);
 
-        if (Number.isFinite(value)) {
+        if (value || value === 0) {
           return value;
         }
       }
@@ -129,8 +176,8 @@ function Analytics() {
         return String(
           first.Player ||
             first.player ||
-            first.name ||
             first.Name ||
+            first.name ||
             first.Batter ||
             first.Bowler ||
             "—"
@@ -143,151 +190,62 @@ function Analytics() {
     return String(data);
   }
 
-  function normalizeBatsmen(data) {
-    if (!data) {
-      return [];
-    }
-
-    if (
-      typeof data === "object" &&
-      !Array.isArray(data)
-    ) {
-      const source =
-        data.data &&
-        typeof data.data === "object"
-          ? data.data
-          : data;
-
-      return Object.entries(source)
-        .map(([name, value]) => ({
-          Player: String(name),
-          name: String(name),
-          player: String(name),
-          Batter: String(name),
-          Runs: safeNumber(value),
-          runs: safeNumber(value),
-          value: safeNumber(value),
-        }))
-        .sort((a, b) => b.value - a.value)
-        .slice(0, 10);
-    }
+  function normalizeWins(data) {
+    let items = [];
 
     if (Array.isArray(data)) {
-      return data
-        .map((item, index) => {
-          if (!item || typeof item !== "object") {
-            return null;
-          }
-
-          const name =
-            item.Player ||
-            item.player ||
-            item.Batter ||
-            item.batter ||
-            item.Name ||
-            item.name ||
-            `Player ${index + 1}`;
-
-          const value =
-            item.Runs ??
-            item.runs ??
-            item.RunsScored ??
-            item.total_runs ??
-            item.TotalRuns ??
-            item.value ??
-            0;
-
-          return {
-            ...item,
-            Player: String(name),
-            name: String(name),
-            player: String(name),
-            Runs: safeNumber(value),
-            runs: safeNumber(value),
-            value: safeNumber(value),
-          };
-        })
-        .filter(Boolean)
-        .sort((a, b) => b.value - a.value)
-        .slice(0, 10);
-    }
-
-    return [];
-  }
-
-  function normalizeTeamWins(data) {
-    if (!data) {
-      return [];
-    }
-
-    if (
-      typeof data === "object" &&
-      !Array.isArray(data)
+      items = data;
+    } else if (
+      data &&
+      typeof data === "object"
     ) {
-      const source =
-        data.data &&
-        typeof data.data === "object"
-          ? data.data
-          : data;
-
-      return Object.entries(source)
-        .map(([team, value]) => ({
-          team: String(team),
-          Team: String(team),
-          team_name: String(team),
-          name: String(team),
-          wins: safeNumber(value),
-          Wins: safeNumber(value),
-          value: safeNumber(value),
-        }))
-        .filter((item) => item.team)
-        .sort((a, b) => b.wins - a.wins)
-        .slice(0, 10);
+      if (Array.isArray(data.data)) {
+        items = data.data;
+      } else {
+        items = Object.entries(data).map(
+          ([team, wins]) => ({
+            team,
+            wins,
+          })
+        );
+      }
     }
 
-    if (Array.isArray(data)) {
-      return data
-        .map((item, index) => {
-          if (!item || typeof item !== "object") {
-            return null;
-          }
+    const normalized = items
+      .map((item) => {
+        const team =
+          item?.team ||
+          item?.Team ||
+          item?.team_name ||
+          item?.TeamName ||
+          item?.name ||
+          item?.Name;
 
-          const team =
-            item.team ||
-            item.Team ||
-            item.team_name ||
-            item.TeamName ||
-            item.name ||
-            item.Name ||
-            `Team ${index + 1}`;
+        const wins =
+          item?.wins ??
+          item?.Wins ??
+          item?.team_wins ??
+          item?.TeamWins ??
+          item?.value ??
+          0;
 
-          const value =
-            item.wins ??
-            item.Wins ??
-            item.team_wins ??
-            item.TeamWins ??
-            item.total_wins ??
-            item.TotalWins ??
-            item.value ??
-            0;
+        return {
+          team: String(team || ""),
+          wins: numberValue(wins),
+        };
+      })
+      .filter(
+        (item) =>
+          CURRENT_TEAMS.includes(item.team)
+      );
 
-          return {
-            ...item,
-            team: String(team),
-            Team: String(team),
-            team_name: String(team),
-            name: String(team),
-            wins: safeNumber(value),
-            Wins: safeNumber(value),
-            value: safeNumber(value),
-          };
-        })
-        .filter(Boolean)
-        .sort((a, b) => b.wins - a.wins)
-        .slice(0, 10);
+    if (normalized.length > 0) {
+      return normalized.sort(
+        (a, b) => b.wins - a.wins
+      );
     }
 
-    return [];
+    return FALLBACK_WINS;
   }
 
   async function loadAnalytics() {
@@ -295,872 +253,607 @@ function Analytics() {
       setRefreshing(true);
       setApiError(false);
 
-      const results = await Promise.allSettled([
-        axios.get(`${BASE_URL}/total_matches`),
-        axios.get(`${BASE_URL}/total_teams`),
-        axios.get(`${BASE_URL}/total_players`),
-        axios.get(`${BASE_URL}/orange_cap`),
-        axios.get(`${BASE_URL}/purple_cap`),
-        axios.get(`${BASE_URL}/team_wins_chart`),
-        axios.get(`${BASE_URL}/top_batsman`),
-      ]);
+      const results =
+        await Promise.allSettled([
+          getData(
+            `${BASE_URL}/total_matches`,
+            0
+          ),
+          getData(
+            `${BASE_URL}/total_teams`,
+            10
+          ),
+          getData(
+            `${BASE_URL}/total_players`,
+            0
+          ),
+          getData(
+            `${BASE_URL}/orange_cap`,
+            null
+          ),
+          getData(
+            `${BASE_URL}/purple_cap`,
+            null
+          ),
+          getData(
+            `${BASE_URL}/team_wins_chart`,
+            FALLBACK_WINS
+          ),
+        ]);
 
       const [
-        matchesRes,
-        teamsRes,
-        playersRes,
-        orangeRes,
-        purpleRes,
-        winsRes,
-        batsmenRes,
+        matchesResult,
+        teamsResult,
+        playersResult,
+        orangeResult,
+        purpleResult,
+        winsResult,
       ] = results;
 
-      const matchesData =
-        matchesRes.status === "fulfilled"
-          ? matchesRes.value?.data
-          : 0;
-
-      const teamsData =
-        teamsRes.status === "fulfilled"
-          ? teamsRes.value?.data
-          : 0;
-
-      const playersData =
-        playersRes.status === "fulfilled"
-          ? playersRes.value?.data
-          : 0;
-
-      const orangeData =
-        orangeRes.status === "fulfilled"
-          ? orangeRes.value?.data
-          : null;
-
-      const purpleData =
-        purpleRes.status === "fulfilled"
-          ? purpleRes.value?.data
-          : null;
-
-      const winsData =
-        winsRes.status === "fulfilled"
-          ? winsRes.value?.data
-          : {};
-
-      const batsmenData =
-        batsmenRes.status === "fulfilled"
-          ? batsmenRes.value?.data
-          : {};
-
       setMatches(
-        extractNumber(matchesData, [
-          "total_matches",
-          "matches",
-          "count",
-          "value",
-          "total",
-        ])
+        extractNumber(
+          matchesResult.value,
+          [
+            "total_matches",
+            "matches",
+            "count",
+            "value",
+            "total",
+          ]
+        )
       );
 
       setTeams(
-        extractNumber(teamsData, [
-          "total_teams",
-          "teams",
-          "count",
-          "value",
-          "total",
-        ])
+        extractNumber(
+          teamsResult.value,
+          [
+            "total_teams",
+            "teams",
+            "count",
+            "value",
+            "total",
+          ]
+        ) || 10
       );
 
       setPlayers(
-        extractNumber(playersData, [
-          "total_players",
-          "players",
-          "count",
-          "value",
-          "total",
-        ])
+        extractNumber(
+          playersResult.value,
+          [
+            "total_players",
+            "players",
+            "count",
+            "value",
+            "total",
+          ]
+        )
       );
 
-      setOrangeCap(normalizeCap(orangeData));
-      setPurpleCap(normalizeCap(purpleData));
+      setOrangeCap(
+        normalizeCap(orangeResult.value)
+      );
 
-      setTeamWins(normalizeTeamWins(winsData));
-      setTopBatsmen(normalizeBatsmen(batsmenData));
+      setPurpleCap(
+        normalizeCap(purpleResult.value)
+      );
+
+      setTeamWins(
+        normalizeWins(winsResult.value)
+      );
 
       if (
         results.some(
-          (item) => item.status === "rejected"
+          (result) =>
+            result.status === "rejected"
         )
       ) {
         setApiError(true);
       }
     } catch (error) {
-      console.error("Analytics API Error:", error);
+      console.error(
+        "Analytics ERROR:",
+        error
+      );
+
       setApiError(true);
+      setTeamWins(FALLBACK_WINS);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
   }
 
+  const totalWins = useMemo(() => {
+    return teamWins.reduce(
+      (total, item) =>
+        total + numberValue(item.wins),
+      0
+    );
+  }, [teamWins]);
+
   return (
-    <div className="min-h-screen bg-[#050816] text-white">
-      <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute -left-48 -top-48 h-[600px] w-[600px] rounded-full bg-blue-600/[0.07] blur-[150px]" />
-        <div className="absolute right-[-220px] top-[25%] h-[600px] w-[600px] rounded-full bg-purple-600/[0.07] blur-[150px]" />
-        <div className="absolute bottom-[-250px] left-[25%] h-[600px] w-[600px] rounded-full bg-orange-500/[0.05] blur-[150px]" />
-      </div>
+    <div className="min-h-screen overflow-x-hidden bg-[#050816] text-white">
+      <Sidebar />
 
-      <div className="relative z-10 flex min-h-screen">
-        <aside className="hidden w-[250px] shrink-0 lg:block">
-          <div className="fixed left-0 top-0 h-screen w-[250px] border-r border-white/[0.06] bg-[#080d18]/95 backdrop-blur-xl">
-            <Sidebar />
-          </div>
-        </aside>
+      <div className="min-h-screen lg:ml-[250px]">
+        <Navbar />
 
-        <main className="min-w-0 flex-1">
-          <div className="sticky top-0 z-40 border-b border-white/[0.06] bg-[#050816]/85 backdrop-blur-2xl">
-            <Navbar />
-          </div>
+        <main className="mx-auto w-full max-w-[1800px] px-4 py-6 sm:px-6 lg:px-8">
+          {/* HEADER */}
+          <section className="mb-8">
+            <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
+              <div>
+                <div className="mb-3 flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-blue-400" />
 
-          <div className="mx-auto w-full max-w-[1750px] px-4 pb-10 pt-8 sm:px-6 lg:px-8 xl:px-10">
-            <section className="mb-7">
-              <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
-                <div className="min-w-0">
-                  <div className="mb-3 flex items-center gap-2">
-                    <span className="relative flex h-2.5 w-2.5">
-                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-60" />
-                      <span className="relative h-2.5 w-2.5 rounded-full bg-blue-400" />
-                    </span>
-
-                    <span className="text-[10px] font-black uppercase tracking-[2.5px] text-blue-400">
-                      IPL Intelligence Center
-                    </span>
-                  </div>
-
-                  <h1 className="text-3xl font-black tracking-[-1.5px] sm:text-4xl lg:text-5xl">
-                    Advanced Analytics
-                  </h1>
-
-                  <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-500 sm:text-base">
-                    Explore IPL performance, team records and player
-                    intelligence through a single analytics workspace.
-                  </p>
+                  <span className="text-[9px] font-black uppercase tracking-[2.5px] text-blue-400">
+                    IPL Intelligence Center
+                  </span>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={loadAnalytics}
-                  disabled={refreshing}
-                  className="inline-flex w-fit items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-xs font-bold text-slate-300 transition hover:border-blue-400/30 hover:text-white disabled:opacity-50"
-                >
-                  <RefreshCw
-                    size={15}
-                    className={
-                      refreshing
-                        ? "animate-spin text-blue-400"
-                        : "text-blue-400"
-                    }
-                  />
+                <h1 className="text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
+                  Advanced Analytics
+                </h1>
 
-                  {refreshing
-                    ? "Refreshing..."
-                    : "Refresh Data"}
-                </button>
+                <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-500">
+                  Explore team dominance, player performance
+                  and IPL statistics in one analytics workspace.
+                </p>
               </div>
-            </section>
 
-            {apiError && (
-              <div className="mb-7 rounded-2xl border border-orange-500/20 bg-orange-500/[0.05] p-4">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex items-start gap-3">
-                    <Activity
-                      size={18}
-                      className="mt-0.5 text-orange-400"
-                    />
-
-                    <div>
-                      <p className="font-bold text-orange-300">
-                        Some analytics data could not be loaded.
-                      </p>
-
-                      <p className="mt-1 text-xs text-slate-600">
-                        Check the FastAPI backend and refresh.
-                      </p>
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={loadAnalytics}
-                    className="rounded-lg bg-orange-500 px-4 py-2 text-xs font-black text-black transition hover:bg-orange-400"
-                  >
-                    Retry
-                  </button>
-                </div>
-              </div>
-            )}
-
-            <section className="mb-7 overflow-hidden rounded-[28px] border border-white/[0.08] bg-gradient-to-br from-[#101827] via-[#0a1220] to-[#080c16] shadow-[0_30px_100px_rgba(0,0,0,0.35)]">
-              <div className="relative grid gap-8 p-6 sm:p-8 lg:p-10 xl:grid-cols-[1fr_430px]">
-                <div>
-                  <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/[0.06] px-3.5 py-2">
-                    <span className="relative flex h-2 w-2">
-                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
-                      <span className="relative h-2 w-2 rounded-full bg-emerald-400" />
-                    </span>
-
-                    <span className="text-[9px] font-black uppercase tracking-[1.8px] text-emerald-300">
-                      Analytics Engine: Online
-                    </span>
-                  </div>
-
-                  <h2 className="mt-6 text-4xl font-black leading-[1.02] tracking-[-2px] sm:text-5xl lg:text-6xl">
-                    Read the game.
-                    <span className="block bg-gradient-to-r from-blue-300 via-purple-400 to-orange-400 bg-clip-text text-transparent">
-                      Through the data.
-                    </span>
-                  </h2>
-
-                  <p className="mt-5 max-w-2xl text-sm leading-7 text-slate-400 sm:text-base">
-                    Turn your IPL dataset into actionable insights with
-                    team performance and player-focused analytics.
-                  </p>
-
-                  <div className="mt-7 flex flex-wrap gap-3">
-                    <HeroPill
-                      icon={BarChart3}
-                      label="Interactive Analytics"
-                    />
-
-                    <HeroPill
-                      icon={TrendingUp}
-                      label="Performance Trends"
-                    />
-
-                    <HeroPill
-                      icon={BrainCircuit}
-                      label="Data Intelligence"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <HeroStat
-                    icon={Trophy}
-                    label="MATCHES"
-                    value={matches}
-                    color="orange"
-                  />
-
-                  <HeroStat
-                    icon={ShieldCheck}
-                    label="TEAMS"
-                    value={teams}
-                    color="blue"
-                  />
-
-                  <HeroStat
-                    icon={Users}
-                    label="PLAYERS"
-                    value={players}
-                    color="purple"
-                  />
-
-                  <HeroStat
-                    icon={Activity}
-                    label="ENGINE"
-                    value="READY"
-                    color="green"
-                  />
-                </div>
-              </div>
-            </section>
-
-            <section className="mb-8">
-              <SectionTitle
-                icon={Gauge}
-                eyebrow="Analytics Overview"
-                title="Key performance indicators"
-                description="Your most important IPL metrics at a glance."
-              />
-
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
-                <MetricCard
-                  title="Total Matches"
-                  value={matches}
-                  subtitle="Matches analysed"
-                  icon={Trophy}
-                  accent="orange"
-                  trend="DATASET"
-                />
-
-                <MetricCard
-                  title="Total Teams"
-                  value={teams}
-                  subtitle="Franchises indexed"
-                  icon={ShieldCheck}
-                  accent="blue"
-                  trend="ACTIVE"
-                />
-
-                <MetricCard
-                  title="Total Players"
-                  value={players}
-                  subtitle="Players indexed"
-                  icon={Users}
-                  accent="cyan"
-                  trend="INDEXED"
-                />
-
-                <MetricCard
-                  title="Orange Cap"
-                  value={orangeCap}
-                  subtitle="Leading run scorer"
-                  icon={Flame}
-                  accent="orange"
-                  trend="LEADER"
-                  player
-                />
-
-                <MetricCard
-                  title="Purple Cap"
-                  value={purpleCap}
-                  subtitle="Leading wicket taker"
-                  icon={Target}
-                  accent="purple"
-                  trend="LEADER"
-                  player
-                />
-              </div>
-            </section>
-
-            <section className="mb-8">
-              <SectionTitle
-                icon={BarChart3}
-                eyebrow="Visual Intelligence"
-                title="Team performance analytics"
-                description="Understand winning records and team-level performance."
-              />
-
-              <div className="grid min-w-0 gap-5 xl:grid-cols-2">
-                <GlassPanel
-                  eyebrow="Team Performance"
-                  title="Team Wins"
-                  description="Compare historical winning records across IPL franchises."
-                  icon={Trophy}
-                  accent="blue"
-                  badge="LIVE DATA"
-                >
-                  <TeamWinsChart data={teamWins} />
-                </GlassPanel>
-
-                <GlassPanel
-                  eyebrow="Team Distribution"
-                  title="Performance Distribution"
-                  description="Visual distribution of team-level IPL performance."
-                  icon={BarChart3}
-                  accent="purple"
-                  badge="ANALYTICS"
-                >
-                  <CustomPieChart data={teamWins} />
-                </GlassPanel>
-              </div>
-            </section>
-
-            <section className="mb-8">
-              <GlassPanel
-                eyebrow="Player Performance"
-                title="Batting performance"
-                description="Visual comparison of leading run-scoring performances."
-                icon={Flame}
-                accent="orange"
-                badge="TOP PERFORMERS"
+              <button
+                type="button"
+                onClick={loadAnalytics}
+                disabled={refreshing}
+                className="flex w-fit items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-xs font-bold text-slate-300 transition hover:border-blue-400/30 hover:text-white disabled:opacity-50"
               >
-                {topBatsmen.length > 0 ? (
-                  <CustomBarChart data={topBatsmen} />
-                ) : (
-                  <EmptyState label="No batting data available." />
-                )}
-              </GlassPanel>
-            </section>
+                <RefreshCw
+                  size={15}
+                  className={
+                    refreshing
+                      ? "animate-spin"
+                      : ""
+                  }
+                />
 
-            <section className="mb-8">
-              <SectionTitle
-                icon={Sparkles}
-                eyebrow="Intelligence Signals"
-                title="Analytics insights"
-                description="Important signals generated from the current IPL dataset."
+                {refreshing
+                  ? "Refreshing..."
+                  : "Refresh Data"}
+              </button>
+            </div>
+          </section>
+
+          {/* API STATUS */}
+          <section className="mb-7 rounded-[24px] border border-emerald-400/10 bg-emerald-500/[0.04] p-5">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10">
+                  <Activity
+                    size={18}
+                    className="text-emerald-400"
+                  />
+                </div>
+
+                <div>
+                  <p className="text-xs font-black text-emerald-300">
+                    Analytics Engine
+                  </p>
+
+                  <p className="mt-1 text-[10px] text-slate-600">
+                    {apiError
+                      ? "Using protected fallback data"
+                      : "Backend data connected"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
+
+                <span className="text-[9px] font-black uppercase tracking-wider text-emerald-300">
+                  {loading
+                    ? "Loading"
+                    : "Connected"}
+                </span>
+              </div>
+            </div>
+          </section>
+
+          {/* KPI CARDS */}
+          <section className="mb-8">
+            <div className="mb-4">
+              <p className="text-[9px] font-black uppercase tracking-[2px] text-slate-600">
+                Overview
+              </p>
+
+              <h2 className="mt-1 text-2xl font-black">
+                Key Metrics
+              </h2>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+              <Metric
+                icon={Trophy}
+                title="Matches"
+                value={matches}
+                accent="orange"
               />
 
-              <div className="grid gap-4 lg:grid-cols-3">
-                <InsightCard
-                  icon={Flame}
-                  title="Orange Cap"
-                  value={loading ? "..." : orangeCap}
-                  description="Current leading run scorer."
-                  accent="orange"
-                  badge="BATTING"
+              <Metric
+                icon={ShieldCheck}
+                title="Teams"
+                value={teams}
+                accent="blue"
+              />
+
+              <Metric
+                icon={Users}
+                title="Players"
+                value={players}
+                accent="purple"
+              />
+
+              <Metric
+                icon={Flame}
+                title="Orange Cap"
+                value={orangeCap}
+                accent="orange"
+              />
+
+              <Metric
+                icon={Target}
+                title="Purple Cap"
+                value={purpleCap}
+                accent="purple"
+              />
+            </div>
+          </section>
+
+          {/* TEAM PERFORMANCE */}
+          <section className="mb-8">
+            <div className="mb-4">
+              <p className="text-[9px] font-black uppercase tracking-[2px] text-blue-400">
+                Performance
+              </p>
+
+              <h2 className="mt-1 text-2xl font-black">
+                Team Performance
+              </h2>
+
+              <p className="mt-1 text-xs text-slate-600">
+                Historical winning records of the current 10 IPL teams.
+              </p>
+            </div>
+
+            <div className="overflow-hidden rounded-[26px] border border-white/[0.07] bg-white/[0.035] p-4 sm:p-6">
+              <div className="h-[420px] w-full">
+                <ResponsiveContainer
+                  width="100%"
+                  height="100%"
+                >
+                  <BarChart
+                    data={teamWins}
+                    margin={{
+                      top: 20,
+                      right: 20,
+                      left: 0,
+                      bottom: 90,
+                    }}
+                  >
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      vertical={false}
+                      stroke="rgba(255,255,255,0.08)"
+                    />
+
+                    <XAxis
+                      dataKey="team"
+                      interval={0}
+                      angle={-35}
+                      textAnchor="end"
+                      height={100}
+                      tick={{
+                        fill: "#64748b",
+                        fontSize: 10,
+                        fontWeight: 700,
+                      }}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+
+                    <YAxis
+                      allowDecimals={false}
+                      tick={{
+                        fill: "#64748b",
+                        fontSize: 10,
+                      }}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+
+                    <Tooltip
+                      cursor={{
+                        fill: "rgba(255,255,255,0.03)",
+                      }}
+                      contentStyle={{
+                        background: "#0b1220",
+                        border:
+                          "1px solid rgba(255,255,255,0.08)",
+                        borderRadius: "12px",
+                        color: "#fff",
+                      }}
+                      formatter={(value) => [
+                        `${Number(value).toLocaleString()} Wins`,
+                        "Wins",
+                      ]}
+                    />
+
+                    <Bar
+                      dataKey="wins"
+                      name="Wins"
+                      fill="#3b82f6"
+                      radius={[8, 8, 0, 0]}
+                      maxBarSize={55}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </section>
+
+          {/* PIE + SUMMARY */}
+          <section className="mb-8 grid gap-5 xl:grid-cols-[1.15fr_0.85fr]">
+            {/* PIE */}
+            <div className="overflow-hidden rounded-[26px] border border-white/[0.07] bg-white/[0.035] p-4 sm:p-6">
+              <div className="mb-4">
+                <p className="text-[9px] font-black uppercase tracking-[2px] text-purple-400">
+                  Distribution
+                </p>
+
+                <h2 className="mt-1 text-2xl font-black">
+                  Team Wins Distribution
+                </h2>
+
+                <p className="mt-1 text-xs text-slate-600">
+                  Visual share of historical team wins.
+                </p>
+              </div>
+
+              <div className="h-[420px] w-full">
+                <ResponsiveContainer
+                  width="100%"
+                  height="100%"
+                >
+                  <PieChart>
+                    <Pie
+                      data={teamWins}
+                      cx="50%"
+                      cy="45%"
+                      outerRadius={125}
+                      innerRadius={65}
+                      paddingAngle={2}
+                      dataKey="wins"
+                      nameKey="team"
+                      stroke="rgba(5,8,22,0.9)"
+                      strokeWidth={2}
+                    >
+                      {teamWins.map(
+                        (entry, index) => (
+                          <Cell
+                            key={`${entry.team}-${index}`}
+                            fill={
+                              COLORS[
+                                index %
+                                  COLORS.length
+                              ]
+                            }
+                          />
+                        )
+                      )}
+                    </Pie>
+
+                    <Tooltip
+                      contentStyle={{
+                        background: "#0b1220",
+                        border:
+                          "1px solid rgba(255,255,255,0.08)",
+                        borderRadius: "12px",
+                        color: "#fff",
+                      }}
+                      formatter={(value) => [
+                        `${Number(value).toLocaleString()} Wins`,
+                        "Wins",
+                      ]}
+                    />
+
+                    <Legend
+                      verticalAlign="bottom"
+                      height={65}
+                      iconType="circle"
+                      wrapperStyle={{
+                        fontSize: "9px",
+                        color: "#64748b",
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* SUMMARY */}
+            <div className="overflow-hidden rounded-[26px] border border-white/[0.07] bg-gradient-to-br from-[#0e1727] to-[#080d18] p-6 sm:p-7">
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-orange-400/10 bg-orange-500/10">
+                  <BrainCircuit
+                    size={19}
+                    className="text-orange-400"
+                  />
+                </div>
+
+                <div>
+                  <p className="text-[9px] font-black uppercase tracking-[2px] text-orange-400">
+                    Intelligence
+                  </p>
+
+                  <h2 className="mt-1 text-xl font-black">
+                    Team Insights
+                  </h2>
+                </div>
+              </div>
+
+              <div className="mt-7 space-y-4">
+                <InsightRow
+                  label="Most Wins"
+                  value={
+                    teamWins[0]?.team ||
+                    "—"
+                  }
+                  icon={Trophy}
+                  color="orange"
                 />
 
-                <InsightCard
-                  icon={Target}
-                  title="Purple Cap"
-                  value={loading ? "..." : purpleCap}
-                  description="Current leading wicket taker."
-                  accent="purple"
-                  badge="BOWLING"
+                <InsightRow
+                  label="Wins"
+                  value={
+                    teamWins[0]?.wins ??
+                    0
+                  }
+                  icon={TrendingUp}
+                  color="blue"
                 />
 
-                <div className="relative overflow-hidden rounded-[24px] border border-emerald-400/10 bg-gradient-to-br from-emerald-500/[0.07] via-white/[0.025] to-blue-500/[0.04] p-6">
-                  <div className="relative">
-                    <div className="flex items-start justify-between">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-emerald-400/10 bg-emerald-500/10">
-                        <Zap
-                          size={19}
-                          className="text-emerald-400"
-                        />
-                      </div>
+                <InsightRow
+                  label="Total Wins"
+                  value={totalWins}
+                  icon={BarChart3}
+                  color="purple"
+                />
 
-                      <span className="rounded-full border border-emerald-400/10 bg-emerald-400/[0.05] px-3 py-1.5 text-[8px] font-black uppercase tracking-wider text-emerald-300">
-                        SYSTEM
-                      </span>
-                    </div>
-
-                    <p className="mt-6 text-[9px] font-black uppercase tracking-[2px] text-slate-600">
-                      Analytics Engine
-                    </p>
-
-                    <h3 className="mt-2 text-2xl font-black text-emerald-400">
-                      ONLINE
-                    </h3>
-
-                    <div className="mt-5 h-1.5 overflow-hidden rounded-full bg-white/[0.05]">
-                      <div className="h-full w-[94%] rounded-full bg-gradient-to-r from-blue-500 via-purple-500 to-emerald-400" />
-                    </div>
-
-                    <p className="mt-3 text-xs leading-5 text-slate-500">
-                      Dataset analysis system is operational and ready
-                      for analytics requests.
-                    </p>
-                  </div>
-                </div>
+                <InsightRow
+                  label="Teams Analysed"
+                  value={teamWins.length}
+                  icon={ShieldCheck}
+                  color="green"
+                />
               </div>
-            </section>
 
-            <section className="mb-8">
-              <div className="relative overflow-hidden rounded-[26px] border border-white/[0.08] bg-gradient-to-br from-[#101827] via-[#0a1220] to-[#080c16] p-6 sm:p-8">
-                <div className="relative flex flex-col gap-7 lg:flex-row lg:items-center lg:justify-between">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <CircleDot
-                        size={13}
-                        className="text-blue-400"
-                      />
+              <div className="mt-7 rounded-2xl border border-white/[0.06] bg-black/[0.15] p-5">
+                <div className="flex items-center gap-2">
+                  <Sparkles
+                    size={14}
+                    className="text-yellow-400"
+                  />
 
-                      <span className="text-[9px] font-black uppercase tracking-[2px] text-blue-400">
-                        Dataset Summary
-                      </span>
-                    </div>
-
-                    <h2 className="mt-2 text-2xl font-black sm:text-3xl">
-                      IPL analytics workspace
-                    </h2>
-
-                    <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-                      Monitor your connected dataset and use these
-                      analytics modules to understand team and player
-                      performance.
-                    </p>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                    <MiniStat
-                      label="Matches"
-                      value={matches}
-                    />
-
-                    <MiniStat
-                      label="Teams"
-                      value={teams}
-                    />
-
-                    <MiniStat
-                      label="Players"
-                      value={players}
-                    />
-
-                    <MiniStat
-                      label="Engine"
-                      value="ON"
-                    />
-                  </div>
+                  <span className="text-[9px] font-black uppercase tracking-[2px] text-slate-500">
+                    Dataset Status
+                  </span>
                 </div>
+
+                <p className="mt-3 text-sm leading-6 text-slate-400">
+                  Analytics is currently processing performance
+                  records for the latest 10 IPL teams configured in
+                  your system.
+                </p>
               </div>
-            </section>
+            </div>
+          </section>
 
-            <footer className="border-t border-white/[0.06] pb-6 pt-7">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-purple-600">
-                    <BarChart3 size={16} />
-                  </div>
+          {/* FOOTER */}
+          <footer className="border-t border-white/[0.06] pt-7">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-[9px] font-black uppercase tracking-[1.8px] text-slate-700">
+                IPL Cricket Analytics
+              </p>
 
-                  <div>
-                    <p className="text-sm font-black text-slate-300">
-                      IPL Analytics
-                    </p>
-
-                    <p className="text-[10px] text-slate-700">
-                      React • FastAPI • Machine Learning
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-[1.5px] text-slate-700">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                  System Operational
-                </div>
+              <div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-wider text-emerald-400">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                Analytics Ready
               </div>
-            </footer>
-          </div>
+            </div>
+          </footer>
         </main>
       </div>
     </div>
   );
 }
 
-function SectionTitle({
+function Metric({
   icon: Icon,
-  eyebrow,
-  title,
-  description,
-}) {
-  return (
-    <div className="mb-5">
-      <div className="flex items-center gap-2">
-        <Icon
-          size={15}
-          className="text-blue-400"
-        />
-
-        <span className="text-[9px] font-black uppercase tracking-[2.5px] text-blue-400">
-          {eyebrow}
-        </span>
-      </div>
-
-      <h2 className="mt-1.5 text-2xl font-black tracking-tight sm:text-3xl">
-        {title}
-      </h2>
-
-      <p className="mt-1.5 max-w-2xl text-sm leading-6 text-slate-500">
-        {description}
-      </p>
-    </div>
-  );
-}
-
-function HeroPill({ icon: Icon, label }) {
-  return (
-    <div className="inline-flex items-center gap-2 rounded-full border border-white/[0.07] bg-white/[0.035] px-3.5 py-2">
-      <Icon
-        size={13}
-        className="text-slate-400"
-      />
-
-      <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500">
-        {label}
-      </span>
-    </div>
-  );
-}
-
-function HeroStat({
-  icon: Icon,
-  label,
-  value,
-  color,
-}) {
-  const colors = {
-    orange:
-      "border-orange-400/10 bg-orange-500/[0.06] text-orange-400",
-    blue:
-      "border-blue-400/10 bg-blue-500/[0.06] text-blue-400",
-    purple:
-      "border-purple-400/10 bg-purple-500/[0.06] text-purple-400",
-    green:
-      "border-emerald-400/10 bg-emerald-500/[0.06] text-emerald-400",
-  };
-
-  return (
-    <div
-      className={`rounded-2xl border p-4 backdrop-blur-md sm:p-5 ${
-        colors[color] || colors.orange
-      }`}
-    >
-      <div className="flex items-center justify-between">
-        <Icon size={17} />
-
-        <span className="text-[8px] font-black uppercase tracking-wider opacity-50">
-          Live
-        </span>
-      </div>
-
-      <p className="mt-5 text-[9px] font-black uppercase tracking-[1.5px] text-slate-600">
-        {label}
-      </p>
-
-      <p className="mt-1 truncate text-xl font-black text-white sm:text-2xl">
-        {value}
-      </p>
-    </div>
-  );
-}
-
-function MetricCard({
   title,
   value,
-  subtitle,
-  icon: Icon,
   accent,
-  trend,
-  player = false,
 }) {
   const styles = {
-    orange: {
-      icon:
-        "border-orange-400/10 bg-orange-500/10 text-orange-400",
-      bar:
-        "from-orange-600 to-orange-300",
-      trend:
-        "text-orange-300",
-    },
-    blue: {
-      icon:
-        "border-blue-400/10 bg-blue-500/10 text-blue-400",
-      bar:
-        "from-blue-700 to-blue-300",
-      trend:
-        "text-blue-300",
-    },
-    cyan: {
-      icon:
-        "border-cyan-400/10 bg-cyan-500/10 text-cyan-400",
-      bar:
-        "from-cyan-700 to-cyan-300",
-      trend:
-        "text-cyan-300",
-    },
-    purple: {
-      icon:
-        "border-purple-400/10 bg-purple-500/10 text-purple-400",
-      bar:
-        "from-purple-700 to-purple-300",
-      trend:
-        "text-purple-300",
-    },
-  };
-
-  const style =
-    styles[accent] || styles.orange;
-
-  return (
-    <div className="group relative min-w-0 overflow-hidden rounded-[22px] border border-white/[0.07] bg-white/[0.035] p-5 backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:border-white/[0.13] hover:bg-white/[0.05]">
-      <div className="relative">
-        <div className="flex items-start justify-between gap-3">
-          <div
-            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border ${style.icon}`}
-          >
-            <Icon size={20} />
-          </div>
-
-          <div
-            className={`flex items-center gap-1 text-[8px] font-black uppercase tracking-wider ${style.trend}`}
-          >
-            <TrendingUp size={11} />
-            {trend}
-          </div>
-        </div>
-
-        <p className="mt-5 truncate text-[9px] font-black uppercase tracking-[1.8px] text-slate-600">
-          {title}
-        </p>
-
-        <h3
-          className={`mt-2 truncate font-black tracking-tight text-white ${
-            player
-              ? "text-base sm:text-lg"
-              : "text-3xl"
-          }`}
-          title={String(value)}
-        >
-          {value}
-        </h3>
-
-        <p className="mt-1 truncate text-[10px] text-slate-700">
-          {subtitle}
-        </p>
-
-        <div className="mt-5 h-1.5 overflow-hidden rounded-full bg-white/[0.05]">
-          <div
-            className={`h-full w-[76%] rounded-full bg-gradient-to-r ${style.bar} opacity-50`}
-          />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function GlassPanel({
-  eyebrow,
-  title,
-  description,
-  icon: Icon,
-  accent,
-  badge,
-  children,
-}) {
-  const accentClass = {
     orange:
-      "text-orange-400 bg-orange-500/10 border-orange-400/10",
+      "border-orange-400/10 bg-orange-500/10 text-orange-400",
     blue:
-      "text-blue-400 bg-blue-500/10 border-blue-400/10",
+      "border-blue-400/10 bg-blue-500/10 text-blue-400",
     purple:
-      "text-purple-400 bg-purple-500/10 border-purple-400/10",
-  }[accent] ||
-  "text-orange-400 bg-orange-500/10 border-orange-400/10";
-
-  return (
-    <div className="min-w-0 overflow-hidden rounded-[26px] border border-white/[0.08] bg-white/[0.035] shadow-[0_20px_70px_rgba(0,0,0,0.22)] backdrop-blur-xl">
-      <div className="border-b border-white/[0.06] p-5 sm:p-6">
-        <div className="flex min-w-0 items-start justify-between gap-4">
-          <div className="flex min-w-0 items-start gap-3">
-            <div
-              className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border ${accentClass}`}
-            >
-              <Icon size={18} />
-            </div>
-
-            <div className="min-w-0">
-              <p className="text-[9px] font-black uppercase tracking-[2px] text-slate-600">
-                {eyebrow}
-              </p>
-
-              <h3 className="mt-1 truncate text-lg font-black text-white sm:text-xl">
-                {title}
-              </h3>
-
-              <p className="mt-1 max-w-xl text-[10px] leading-5 text-slate-600">
-                {description}
-              </p>
-            </div>
-          </div>
-
-          {badge && (
-            <span className="shrink-0 rounded-full border border-white/[0.07] bg-white/[0.03] px-3 py-1.5 text-[8px] font-black uppercase tracking-wider text-slate-600">
-              {badge}
-            </span>
-          )}
-        </div>
-      </div>
-
-      <div className="p-3 sm:p-5">
-        <div className="min-w-0 overflow-hidden rounded-2xl border border-white/[0.04] bg-black/[0.10] p-3 sm:p-5">
-          {children}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function InsightCard({
-  icon: Icon,
-  title,
-  value,
-  description,
-  accent,
-  badge,
-}) {
-  const styles = {
-    orange: {
-      icon:
-        "border-orange-400/10 bg-orange-500/10 text-orange-400",
-      value:
-        "text-orange-300",
-    },
-    purple: {
-      icon:
-        "border-purple-400/10 bg-purple-500/10 text-purple-400",
-      value:
-        "text-purple-300",
-    },
+      "border-purple-400/10 bg-purple-500/10 text-purple-400",
   };
 
-  const style =
-    styles[accent] || styles.orange;
-
   return (
-    <div className="min-w-0 overflow-hidden rounded-[24px] border border-white/[0.07] bg-white/[0.035] p-6 backdrop-blur-xl transition duration-300 hover:-translate-y-1 hover:border-white/[0.12]">
-      <div className="flex items-start justify-between gap-4">
-        <div
-          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border ${style.icon}`}
-        >
-          <Icon size={19} />
-        </div>
-
-        <span className="shrink-0 rounded-full border border-white/[0.06] bg-white/[0.025] px-3 py-1.5 text-[8px] font-black uppercase tracking-wider text-slate-600">
-          {badge}
-        </span>
+    <div className="overflow-hidden rounded-[22px] border border-white/[0.07] bg-white/[0.035] p-5">
+      <div
+        className={`flex h-11 w-11 items-center justify-center rounded-xl border ${
+          styles[accent] || styles.orange
+        }`}
+      >
+        <Icon size={20} />
       </div>
 
-      <p className="mt-6 text-[9px] font-black uppercase tracking-[2px] text-slate-600">
+      <p className="mt-5 text-[8px] font-black uppercase tracking-[1.8px] text-slate-600">
         {title}
       </p>
 
-      <h3
-        className={`mt-2 truncate text-2xl font-black ${style.value}`}
+      <p
+        className="mt-2 truncate text-xl font-black text-white"
         title={String(value)}
       >
         {value}
-      </h3>
-
-      <p className="mt-3 text-xs leading-6 text-slate-500">
-        {description}
       </p>
     </div>
   );
 }
 
-function MiniStat({ label, value }) {
-  return (
-    <div className="min-w-0 rounded-xl border border-white/[0.06] bg-white/[0.025] px-4 py-3">
-      <p className="truncate text-[8px] font-black uppercase tracking-wider text-slate-600">
-        {label}
-      </p>
+function InsightRow({
+  label,
+  value,
+  icon: Icon,
+  color,
+}) {
+  const colorClasses = {
+    orange: "text-orange-400 bg-orange-500/10",
+    blue: "text-blue-400 bg-blue-500/10",
+    purple:
+      "text-purple-400 bg-purple-500/10",
+    green:
+      "text-emerald-400 bg-emerald-500/10",
+  };
 
-      <p className="mt-1 truncate text-lg font-black text-white">
-        {value}
-      </p>
-    </div>
-  );
-}
-
-function EmptyState({ label }) {
   return (
-    <div className="flex min-h-[280px] w-full flex-col items-center justify-center rounded-2xl border border-white/[0.05] bg-white/[0.015] px-4 text-center">
-      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/[0.03]">
-        <AlertCircle
-          size={22}
-          className="text-slate-700"
-        />
+    <div className="flex items-center justify-between gap-4 rounded-xl border border-white/[0.05] bg-white/[0.02] p-4">
+      <div className="flex min-w-0 items-center gap-3">
+        <div
+          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
+            colorClasses[color] ||
+            colorClasses.blue
+          }`}
+        >
+          <Icon size={15} />
+        </div>
+
+        <span className="truncate text-xs font-bold text-slate-500">
+          {label}
+        </span>
       </div>
 
-      <p className="mt-4 text-sm font-bold text-slate-500">
-        {label}
-      </p>
-
-      <p className="mt-1 text-[10px] text-slate-700">
-        Try refreshing the analytics data.
-      </p>
+      <span
+        className="max-w-[55%] truncate text-sm font-black text-white"
+        title={String(value)}
+      >
+        {value}
+      </span>
     </div>
   );
 }
