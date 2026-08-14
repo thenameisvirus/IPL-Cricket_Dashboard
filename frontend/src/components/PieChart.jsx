@@ -1,6 +1,3 @@
-import { useEffect, useState } from "react";
-import axios from "axios";
-
 import {
   PieChart,
   Pie,
@@ -9,8 +6,6 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
-
-import BASE_URL from "../services/api";
 
 const COLORS = [
   "#f97316",
@@ -26,121 +21,46 @@ const COLORS = [
 ];
 
 function CustomPieChart({ data = [] }) {
-  const [apiData, setApiData] = useState([]);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (Array.isArray(data) && data.length > 0) {
-      setApiData(normalizeData(data));
-      return;
-    }
-
-    loadData();
-  }, [data]);
-
-  async function loadData() {
-    try {
-      setLoading(true);
-
-      const response = await axios.get(
-        `${BASE_URL}/team_wins_chart`
-      );
-
-      const raw =
-        response?.data?.data ??
-        response?.data?.teams ??
-        response?.data ??
-        [];
-
-      setApiData(normalizeData(raw));
-    } catch (error) {
-      console.error(
-        "Team Pie Chart Error:",
-        error
-      );
-
-      setApiData([]);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  function normalizeData(raw) {
-    if (!raw) {
-      return [];
-    }
-
-    if (
-      typeof raw === "object" &&
-      !Array.isArray(raw)
-    ) {
-      return Object.entries(raw)
-        .map(([team, value]) => ({
-          name: String(team),
-          value: Number(value) || 0,
-        }))
-        .filter((item) => item.value > 0)
-        .sort((a, b) => b.value - a.value)
-        .slice(0, 10);
-    }
-
-    if (Array.isArray(raw)) {
-      return raw
-        .map((team) => ({
+  const chartData = Array.isArray(data)
+    ? data
+        .map((item) => ({
           name:
-            team?.team ||
-            team?.Team ||
-            team?.team_name ||
-            team?.TeamName ||
-            team?.name ||
+            item?.team ||
+            item?.Team ||
+            item?.team_name ||
+            item?.TeamName ||
+            item?.name ||
             "Unknown",
+
           value:
             Number(
-              team?.wins ??
-                team?.Wins ??
-                team?.team_wins ??
-                team?.TeamWins ??
-                team?.total_wins ??
-                team?.TotalWins ??
-                team?.value ??
+              item?.wins ??
+                item?.Wins ??
+                item?.team_wins ??
+                item?.TeamWins ??
+                item?.total_wins ??
+                item?.TotalWins ??
+                item?.value ??
                 0
             ) || 0,
         }))
         .filter((item) => item.value > 0)
-        .slice(0, 10);
-    }
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 10)
+    : [];
 
-    return [];
-  }
-
-  if (loading) {
+  if (!chartData.length) {
     return (
       <div className="flex min-h-[350px] items-center justify-center">
         <div className="text-center">
-          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-white/10 border-t-purple-400" />
-
-          <p className="mt-4 text-xs font-bold text-slate-500">
-            Loading distribution...
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!apiData.length) {
-    return (
-      <div className="flex min-h-[350px] items-center justify-center">
-        <div className="text-center">
-          <div className="mb-4 text-5xl">
-            📊
-          </div>
+          <div className="mb-4 text-5xl">📊</div>
 
           <h3 className="text-xl font-black text-slate-300">
             No team performance data
           </h3>
 
           <p className="mt-2 text-sm text-slate-600">
-            Backend did not return team performance statistics.
+            No team performance records were returned.
           </p>
         </div>
       </div>
@@ -149,13 +69,10 @@ function CustomPieChart({ data = [] }) {
 
   return (
     <div className="h-[350px] w-full min-w-0">
-      <ResponsiveContainer
-        width="100%"
-        height="100%"
-      >
+      <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie
-            data={apiData}
+            data={chartData}
             cx="50%"
             cy="43%"
             outerRadius={105}
@@ -166,12 +83,10 @@ function CustomPieChart({ data = [] }) {
             stroke="rgba(5,8,22,0.9)"
             strokeWidth={2}
           >
-            {apiData.map((entry, index) => (
+            {chartData.map((entry, index) => (
               <Cell
                 key={`${entry.name}-${index}`}
-                fill={
-                  COLORS[index % COLORS.length]
-                }
+                fill={COLORS[index % COLORS.length]}
               />
             ))}
           </Pie>

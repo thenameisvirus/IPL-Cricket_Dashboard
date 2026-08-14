@@ -19,6 +19,7 @@ function TeamWinsChart({ data = [] }) {
             item?.TeamName ||
             item?.name ||
             "Unknown",
+
           wins:
             Number(
               item?.wins ??
@@ -33,19 +34,20 @@ function TeamWinsChart({ data = [] }) {
         }))
         .filter((item) => item.team)
         .sort((a, b) => b.wins - a.wins)
+        .slice(0, 10)
     : [];
 
-  if (chartData.length === 0) {
+  if (!chartData.length) {
     return (
-      <div className="flex min-h-[320px] items-center justify-center text-center">
-        <div>
-          <div className="mb-3 text-5xl">🏆</div>
+      <div className="flex min-h-[320px] items-center justify-center">
+        <div className="text-center">
+          <div className="mb-4 text-5xl">🏆</div>
 
-          <h3 className="text-lg font-black text-slate-300">
-            No team performance data
+          <h3 className="text-xl font-black text-slate-300">
+            No team wins data available
           </h3>
 
-          <p className="mt-2 text-xs text-slate-600">
+          <p className="mt-2 text-sm text-slate-600">
             No team win records were returned.
           </p>
         </div>
@@ -55,15 +57,12 @@ function TeamWinsChart({ data = [] }) {
 
   return (
     <div className="h-[350px] w-full min-w-0">
-      <ResponsiveContainer
-        width="100%"
-        height="100%"
-      >
+      <ResponsiveContainer width="100%" height="100%">
         <BarChart
           data={chartData}
           margin={{
             top: 15,
-            right: 15,
+            right: 20,
             left: 0,
             bottom: 80,
           }}
@@ -81,8 +80,8 @@ function TeamWinsChart({ data = [] }) {
             textAnchor="end"
             height={90}
             tick={{
-              fill: "#64748b",
               fontSize: 10,
+              fill: "#64748b",
               fontWeight: 700,
             }}
             axisLine={false}
@@ -92,8 +91,8 @@ function TeamWinsChart({ data = [] }) {
           <YAxis
             allowDecimals={false}
             tick={{
-              fill: "#64748b",
               fontSize: 10,
+              fill: "#64748b",
             }}
             axisLine={false}
             tickLine={false}
@@ -103,10 +102,6 @@ function TeamWinsChart({ data = [] }) {
             cursor={{
               fill: "rgba(255,255,255,0.03)",
             }}
-            formatter={(value) => [
-              `${Number(value).toLocaleString()} Wins`,
-              "Wins",
-            ]}
             contentStyle={{
               background: "#0b1220",
               border:
@@ -114,6 +109,10 @@ function TeamWinsChart({ data = [] }) {
               borderRadius: "12px",
               color: "#fff",
             }}
+            formatter={(value) => [
+              `${Number(value).toLocaleString()} Wins`,
+              "Wins",
+            ]}
           />
 
           <Bar
