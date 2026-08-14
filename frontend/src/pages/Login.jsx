@@ -48,8 +48,8 @@ const players = [
   },
   {
     name: "Ravindra Jadeja",
-    role: "ALL ROUNDER • RR",
-    image:
+     role: "ALL ROUNDER • RR",
+     image:
       "https://documents.iplt20.com/ipl/IPLHeadshot2025/46.png",
   },
   {
@@ -95,16 +95,16 @@ const players = [
       "https://documents.iplt20.com/ipl/IPLHeadshot2025/125.png",
   },
   {
-    name: "Riyan Parag",
-    role: "ALL ROUNDER • RR",
+    name: "Vaibhav Sooryavanshi",
+    role: "BATSMAN • RR",
     image:
-      "https://documents.iplt20.com/ipl/IPLHeadshot2025/188.png",
+      "https://documents.iplt20.com/ipl/IPLHeadshot2025/218.png",
   },
   {
-    name: "Jitesh Sharma",
-    role: "WICKET KEEPER • RCB",
+    name: "Ishan Kishan",
+    role: "WICKET KEEPER • SRH",
     image:
-      "https://documents.iplt20.com/ipl/IPLHeadshot2025/666.png",
+    "https://documents.iplt20.com/ipl/IPLHeadshot2025/148.png",
   },
 ];
 const scrollPlayers = [...players, ...players, ...players];
