@@ -54,7 +54,7 @@ const players = [
   },
   {
     name: "Rishabh Pant",
-    role: "WICKET KEEPER • DC",
+    role: "WICKET KEEPER • LSG",
     image:
       "https://documents.iplt20.com/ipl/IPLHeadshot2026/18.png",
   },
@@ -98,7 +98,7 @@ const players = [
     name: "Ishan Kishan",
     role: "WICKET KEEPER • SRH",
     image:
-      "https://documents.iplt20.com/ipl/IPLHeadshot2026/148.png",
+        "https://documents.iplt20.com/ipl/IPLHeadshot2025/164.png",
   },
   {
     name: "Vaibhav Sooryavanshi",
