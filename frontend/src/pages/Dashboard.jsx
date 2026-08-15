@@ -804,23 +804,16 @@ function Dashboard() {
 
 function extractNumber(data) {
   if (typeof data === "number") {
-    return Number.isFinite(data)
-      ? data
-      : 0;
+    return Number.isFinite(data) ? data : 0;
   }
 
   if (typeof data === "string") {
-    const value = Number(data);
+    const value = Number(data.replace(/,/g, "").trim());
 
-    return Number.isFinite(value)
-      ? value
-      : 0;
+    return Number.isFinite(value) ? value : 0;
   }
 
-  if (
-    !data ||
-    typeof data !== "object"
-  ) {
+  if (!data || typeof data !== "object") {
     return 0;
   }
 
@@ -828,15 +821,21 @@ function extractNumber(data) {
     "value",
     "count",
     "total",
+
     "matches",
     "total_matches",
     "totalMatches",
+    "Total Matches",
+
     "teams",
     "total_teams",
     "totalTeams",
+    "Total Teams",
+
     "players",
     "total_players",
     "totalPlayers",
+    "Total Players",
   ];
 
   for (const key of keys) {
@@ -844,9 +843,7 @@ function extractNumber(data) {
       data[key] !== undefined &&
       data[key] !== null
     ) {
-      const value = Number(
-        data[key]
-      );
+      const value = Number(data[key]);
 
       if (Number.isFinite(value)) {
         return value;
